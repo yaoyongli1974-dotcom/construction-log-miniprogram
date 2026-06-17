@@ -7,7 +7,7 @@ Page({
     isEdit: false,
     log: {
       date: '',
-      weather: '',
+      weather: '晴',
       projectName: '',
       location: {
         name: '',
@@ -17,7 +17,7 @@ Page({
       content: {
         constructionContent: '',
         personnelCount: 0,
-        machineryCount: 0,
+        machineryList: [{ type: '', count: '' }],  // 代替 machineryCount
         progressPercent: 0,
         qualityCheck: '',
         safetyCheck: '',
@@ -27,10 +27,14 @@ Page({
       images: [],
       status: 'draft'
     },
-    weatherLoading: false,
     locationLoading: false,
     saving: false,
     currentDate: '',
+    // 天气选项（手动选择）
+    weatherOptions: ['晴', '多云', '阴', '小雨', '中雨', '大雨', '雷阵雨', '小雪', '中雪', '大雪', '雾', '霾'],
+    weatherIndex: 0,
+    // 天气下拉菜单
+    showWeatherDropdown: false,
     // 历史记录相关
     showHistory: false,
     historyList: [],
@@ -52,6 +56,21 @@ Page({
   },
 
   onShow() {
+    // 检查是否从详情页点击"编辑"按钮进入（通过 globalData 传参）
+    if (app.globalData.editMode && app.globalData.editLogId) {
+      const editId = app.globalData.editLogId;
+      // 清除 globalData 中的编辑参数（防止重复加载）
+      app.globalData.editLogId = '';
+      app.globalData.editMode = false;
+      
+      this.setData({ 
+        logId: editId,
+        isEdit: true 
+      });
+      this.loadLogForEdit(editId);
+      return;
+    }
+    
     // TabBar 页面切换时，检查是否需要重置表单
     if (!this.data.isEdit && app.globalData.needResetCreatePage) {
       app.globalData.needResetCreatePage = false;
@@ -77,14 +96,14 @@ Page({
       isEdit: false,
       saving: false,
       'log.date': today,
-      'log.weather': '',
+      'log.weather': '晴',
       'log.projectName': lastProjectName,
       'log.location.name': '',
       'log.location.lat': 0,
       'log.location.lng': 0,
       'log.content.constructionContent': '',
       'log.content.personnelCount': 0,
-      'log.content.machineryCount': 0,
+      'log.content.machineryList': [{ type: '', count: '' }],  // 代替 machineryCount
       'log.content.progressPercent': 0,
       'log.content.qualityCheck': '',
       'log.content.safetyCheck': '',
@@ -93,7 +112,7 @@ Page({
       'log.images': [],
       'log.status': 'draft',
       currentDate: today,
-      weatherLoading: false,
+      weatherIndex: 0,
       locationLoading: false
     });
   },
@@ -102,13 +121,34 @@ Page({
   async loadLogForEdit(logId) {
     try {
       wx.showLoading({ title: '加载中...' });
+      console.log('[编辑] 开始加载日志, logId:', logId);
       
       const db = wx.cloud.database();
       const result = await db.collection('logs').doc(logId).get();
+      console.log('[编辑] 数据库查询成功');
       
       if (result.data) {
+        const logData = result.data;
+        
+        // 兼容旧数据（machineryCount）和新数据（machineryList）
+        if (!logData.content.machineryList || logData.content.machineryList.length === 0) {
+          if (logData.content.machineryCount) {
+            // 旧数据迁移：machineryCount → machineryList
+            logData.content.machineryList = [{ type: '机械', count: logData.content.machineryCount }];
+          } else {
+            logData.content.machineryList = [{ type: '', count: '' }];
+          }
+        }
+        
+        // 根据已保存的天气，设置 weatherIndex
+        let weatherIndex = -1;
+        if (logData.weather) {
+          weatherIndex = this.data.weatherOptions.indexOf(logData.weather);
+        }
+        
         this.setData({
-          log: result.data,
+          log: logData,
+          weatherIndex: weatherIndex,
           loading: false
         });
       }
@@ -118,64 +158,6 @@ Page({
       console.error('加载日志失败', err);
       wx.hideLoading();
       wx.showToast({ title: '加载失败', icon: 'none' });
-    }
-  },
-
-  // 获取位置和天气
-  async getLocationAndWeather() {
-    this.setData({
-      weatherLoading: true,
-      locationLoading: true
-    });
-
-    try {
-      // 获取位置（带超时）
-      const location = await this.getLocation().catch(() => null);
-      
-      if (location) {
-        this.setData({
-          'log.location.name': location.name,
-          'log.location.lat': location.latitude,
-          'log.location.lng': location.longitude,
-          locationLoading: false
-        });
-      } else {
-        // 获取位置失败，使用默认位置
-        this.setData({
-          'log.location.name': '未获取位置',
-          locationLoading: false
-        });
-      }
-
-      // 获取天气（云开发可用时才调用）
-      if (app.globalData.cloudReady) {
-        const lat = this.data.log.location.lat || 34.27;  // 默认西安纬度
-        const lng = this.data.log.location.lng || 108.93; // 默认西安经度
-
-        const weatherResult = await wx.cloud.callFunction({
-          name: 'getWeather',
-          data: { lat, lng }
-        }).catch(() => null);
-
-        if (weatherResult && weatherResult.result.success) {
-          const weather = weatherResult.result.data;
-          this.setData({
-            'log.weather': `${weather.weather} ${weather.temp}°C`,
-            weatherLoading: false
-          });
-        } else {
-          this.setData({ weatherLoading: false });
-        }
-      } else {
-        this.setData({ weatherLoading: false });
-      }
-    } catch (err) {
-      console.error('获取位置或天气失败', err);
-      this.setData({ 
-        weatherLoading: false,
-        locationLoading: false,
-        'log.location.name': '未获取位置'
-      });
     }
   },
 
@@ -227,9 +209,6 @@ Page({
           'log.location.lng': location.longitude,
           locationLoading: false
         });
-
-        // 选择位置后，自动获取天气
-        this.getWeatherByLocation(location.latitude, location.longitude);
       } else {
         this.setData({ locationLoading: false });
       }
@@ -237,36 +216,6 @@ Page({
       console.error('选择位置失败', err);
       this.setData({ locationLoading: false });
       wx.showToast({ title: '选择位置失败', icon: 'none' });
-    }
-  },
-
-  // 根据位置获取天气
-  async getWeatherByLocation(lat, lng) {
-    this.setData({ weatherLoading: true });
-
-    try {
-      if (!app.globalData.cloudReady) {
-        this.setData({ weatherLoading: false });
-        return;
-      }
-
-      const weatherResult = await wx.cloud.callFunction({
-        name: 'getWeather',
-        data: { lat, lng }
-      }).catch(() => null);
-
-      if (weatherResult && weatherResult.result.success) {
-        const weather = weatherResult.result.data;
-        this.setData({
-          'log.weather': `${weather.weather} ${weather.temp}°C`,
-          weatherLoading: false
-        });
-      } else {
-        this.setData({ weatherLoading: false });
-      }
-    } catch (err) {
-      console.error('获取天气失败', err);
-      this.setData({ weatherLoading: false });
     }
   },
 
@@ -298,10 +247,39 @@ Page({
     });
   },
 
-  // 机械台数输入
-  onMachineryCountInput(e) {
+  // 机械类型输入
+  onMachineryTypeInput(e) {
+    const index = e.currentTarget.dataset.index;
     this.setData({
-      'log.content.machineryCount': parseInt(e.detail.value) || 0
+      [`log.content.machineryList[${index}].type`]: e.detail.value
+    });
+  },
+
+  // 机械台班数输入
+  onMachineryCountInput(e) {
+    const index = e.currentTarget.dataset.index;
+    this.setData({
+      [`log.content.machineryList[${index}].count`]: e.detail.value
+    });
+  },
+
+  // 新增机械类型
+  addMachinery() {
+    const list = this.data.log.content.machineryList;
+    list.push({ type: '', count: '' });
+    this.setData({
+      'log.content.machineryList': list
+    });
+  },
+
+  // 删除机械类型
+  removeMachinery(e) {
+    const index = e.currentTarget.dataset.index;
+    const list = this.data.log.content.machineryList;
+    if (list.length <= 1) return;
+    list.splice(index, 1);
+    this.setData({
+      'log.content.machineryList': list
     });
   },
 
@@ -315,6 +293,31 @@ Page({
     });
   },
 
+  // 切换天气下拉菜单
+  toggleWeatherDropdown() {
+    this.setData({
+      showWeatherDropdown: !this.data.showWeatherDropdown
+    });
+  },
+
+  // 关闭天气下拉菜单
+  closeWeatherDropdown() {
+    this.setData({
+      showWeatherDropdown: false
+    });
+  },
+
+  // 选择天气
+  selectWeather(e) {
+    const index = e.currentTarget.dataset.index;
+    const weather = this.data.weatherOptions[index];
+    this.setData({
+      weatherIndex: index,
+      'log.weather': weather,
+      showWeatherDropdown: false
+    });
+  },
+  
   // 质量检查输入
   onQualityCheckInput(e) {
     this.setData({
@@ -394,7 +397,7 @@ Page({
     const currentValue = this.data.log.content[field] || '';
     
     // 根据字段类型处理
-    if (field === 'personnelCount' || field === 'machineryCount' || field === 'progressPercent') {
+    if (field === 'personnelCount' || field === 'progressPercent') {
       // 数字字段直接替换
       this.setData({
         [`log.content.${field}`]: parseInt(value) || 0
@@ -550,97 +553,112 @@ Page({
   // 保存日志
   async saveLog(status) {
     if (this.data.saving) return;
-
     // 检查云开发是否就绪
     if (!app.globalData.cloudReady) {
-      wx.showToast({ title: '请先配置云开发环境', icon: 'none' });
+      wx.showModal({
+        title: '提示',
+        content: '云开发环境未就绪，请确认：\n1. 已在开发者工具中开通云开发\n2. 环境ID配置正确\n3. 云函数已上传到云端',
+        showCancel: false
+      });
       return;
     }
 
     this.setData({ saving: true });
     wx.showLoading({ title: '保存中...' });
+    console.log('[保存] 开始, status:', status, 'isEdit:', this.data.isEdit);
     
     try {
       const { log, logId, isEdit } = this.data;
       log.status = status;
       
+      // 处理机械列表
+      const cleanMachineryList = (log.content.machineryList || []).filter(item => {
+        return item.type || item.count;
+      }).map(item => ({
+        type: item.type,
+        count: parseInt(item.count) || 0
+      }));
+      log.content.machineryList = cleanMachineryList;
+      delete log.content.machineryCount;
+      
       let result;
       
       if (isEdit) {
-        // 编辑模式：更新日志
-        const db = wx.cloud.database();
-        result = await db.collection('logs').doc(logId).update({
-          data: {
-            ...log,
-            updateTime: new Date()
-          }
+        // 编辑模式
+        console.log('[保存] 调用updateLog, logId:', logId);
+        result = await wx.cloud.callFunction({
+          name: 'updateLog',
+          data: { logId, logData: log },
+          timeout: 15000
         });
-        result = { result: { success: true } };
+        console.log('[保存] updateLog结果:', JSON.stringify(result));
       } else {
-        // 新建模式：创建日志
+        // 新建模式
+        console.log('[保存] 调用createLog');
         result = await wx.cloud.callFunction({
           name: 'createLog',
-          data: {
-            logData: log
-          }
+          data: { logData: log },
+          timeout: 15000
         });
+        console.log('[保存] createLog结果:', JSON.stringify(result));
       }
       
       wx.hideLoading();
       this.setData({ saving: false });
       
-      if (result.result.success || isEdit) {
+      if (result.result && result.result.success) {
         wx.showToast({
           title: status === 'published' ? (isEdit ? '更新成功' : '发布成功') : '草稿保存成功',
           icon: 'success'
         });
         
-        // 记住项目名称（保存到本地存储）
         if (log.projectName) {
           wx.setStorageSync('lastProjectName', log.projectName);
         }
         
-        // 保存历史记录（用于自动补全）
         if (status === 'published' && !isEdit) {
           this.saveFieldHistory('constructionContent', log.content.constructionContent);
           this.saveFieldHistory('personnelCount', log.content.personnelCount);
-          this.saveFieldHistory('machineryCount', log.content.machineryCount);
           this.saveFieldHistory('progressPercent', log.content.progressPercent);
           this.saveFieldHistory('qualityCheck', log.content.qualityCheck);
-          this.saveFieldHistory('safetyCheck', log.content.safetyCheck);
           this.saveFieldHistory('issues', log.content.issues);
           this.saveFieldHistory('nextPlan', log.content.nextPlan);
         }
         
-        // 设置重置标记（下次进入新建页面时自动清空表单）
         app.globalData.needResetCreatePage = true;
-        
-        // 设置刷新标记（使用 globalData 传递，兼容 switchTab 和 navigateBack）
         app.globalData.needRefresh = true;
         
-        // 导航逻辑：根据页面栈决定如何返回
         const pages = getCurrentPages();
-        
         if (pages.length > 1) {
-          // 从其他页面跳转过来的（如编辑模式），返回上一页
           wx.navigateBack();
         } else {
-          // 从 TabBar 直接打开的，切换到日志列表页
-          wx.switchTab({
-            url: '/pages/index/index'
-          });
+          wx.switchTab({ url: '/pages/index/index' });
         }
       } else {
         wx.showToast({
-          title: result.result.message || '保存失败',
+          title: (result && result.result && result.result.message) || '保存失败',
           icon: 'none'
         });
       }
     } catch (err) {
-      console.error('保存日志失败', err);
+      console.error('[保存] 失败', err);
       wx.hideLoading();
       this.setData({ saving: false });
-      wx.showToast({ title: '保存失败', icon: 'none' });
+      
+      let errorMsg = '保存失败';
+      if (err.errMsg && err.errMsg.includes('timeout')) {
+        errorMsg = '请求超时！请检查：\n1. 云函数是否已上传\n2. 网络连接是否正常';
+      } else if (err.errMsg && err.errMsg.includes('fail')) {
+        errorMsg = '网络请求失败，请检查网络';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      wx.showModal({
+        title: '保存失败',
+        content: errorMsg,
+        showCancel: false
+      });
     }
   },
 

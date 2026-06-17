@@ -8,7 +8,9 @@ App({
       isLogin: false,
       cloudReady: false,  // 云开发是否就绪
       needRefresh: false,  // 是否需要刷新列表
-      needResetCreatePage: false  // 是否需要重置新建页面表单
+      needResetCreatePage: false,  // 是否需要重置新建页面表单
+      editLogId: '',  // 编辑日志时的日志ID
+      editMode: false  // 是否处于编辑模式
     };
 
     // 初始化云开发（容错处理，不阻塞启动）
@@ -34,7 +36,7 @@ App({
       // 延迟获取用户信息（不阻塞启动，避免超时错误）
       setTimeout(() => {
         this.getUserInfo();
-      }, 1500);
+      }, 2000);
     } catch (err) {
       console.warn('[警告] 云开发初始化失败，请检查环境ID配置', err);
       this.globalData.cloudReady = false;
@@ -59,7 +61,7 @@ App({
               if (that.globalData.cloudReady) {
                 setTimeout(() => {
                   that.cloudLogin();
-                }, 500);
+                }, 1000);
               }
             }
           });
@@ -74,23 +76,19 @@ App({
   cloudLogin() {
     const that = this;
 
-    // 设置超时定时器（8秒）
-    const timer = setTimeout(() => {
-      console.warn('[提示] 登录请求超时，将在后台重试');
-    }, 8000);
-
     wx.cloud.callFunction({
       name: 'login',
-      data: {}
+      data: {},
+      // 设置超时时间为10秒（避免默认超时导致红色报错）
+      timeout: 10000
     }).then(res => {
-      clearTimeout(timer);
       if (res.result && res.result.openid) {
         that.globalData.openid = res.result.openid;
         console.log('[成功] 用户openid:', res.result.openid);
       }
     }).catch(err => {
-      clearTimeout(timer);
-      console.warn('[警告] 云函数login调用失败', err);
+      // 登录失败不影响小程序使用，下次操作时会重试
+      console.warn('[提示] 登录请求异常（可能网络问题），不影响使用:', err.errMsg || err.message || err);
     });
   },
 

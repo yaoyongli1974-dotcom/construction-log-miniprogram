@@ -10,16 +10,30 @@
         </picker>
       </view>
       
-      <view class="form-item weather-item">
+      <view class="form-item">
         <text class="label">天气</text>
-        <view class="weather-value">
-          <text wx:if="{{weatherLoading}}">获取中...</text>
-          <text wx:else>{{log.weather || '未获取'}}</text>
+        <view class="dropdown" bindtap="toggleWeatherDropdown">
+          <view class="dropdown-value">
+            <text>{{log.weather || '请选择天气'}}</text>
+            <text class="dropdown-arrow {{showWeatherDropdown ? 'arrow-up' : ''}}">▼</text>
+          </view>
+          <view class="dropdown-list" wx:if="{{showWeatherDropdown}}">
+            <view 
+              wx:for="{{weatherOptions}}" 
+              wx:key="index"
+              class="dropdown-item {{weatherIndex === index ? 'dropdown-item-active' : ''}}"
+              catchtap="selectWeather"
+              data-index="{{index}}"
+            >{{item}}</view>
+          </view>
         </view>
       </view>
     </view>
   </view>
   
+  <!-- 天气下拉菜单遮罩层 -->
+  <view class="dropdown-mask" wx:if="{{showWeatherDropdown}}" bindtap="closeWeatherDropdown"></view>
+
   <!-- 项目信息 -->
   <view class="card">
     <view class="form-item">
@@ -66,45 +80,61 @@
   
   <!-- 人员和进度 -->
   <view class="card">
-    <view class="form-item">
-      <text class="label">施工人数</text>
-      <input 
-        class="input-wrap"
-        type="number"
-        style="height: 80rpx;"
-        placeholder="请输入施工人数"
-        value="{{log.content.personnelCount}}"
-        bindinput="onPersonnelCountInput"
-      />
-    </view>
-    
-    <view class="form-item">
-      <text class="label">机械台数</text>
-      <input 
-        class="input-wrap"
-        type="number"
-        style="height: 80rpx;"
-        placeholder="请输入机械台数"
-        value="{{log.content.machineryCount}}"
-        bindinput="onMachineryCountInput"
-      />
-    </view>
-    
-    <view class="form-item form-item-inline">
-      <view class="label-row" style="width: 160rpx; flex-shrink: 0;">
-        <text class="label">进度百分比</text>
-        <text class="history-btn" bindtap="showHistory" data-field="progressPercent">📋</text>
-      </view>
-      <view class="input-with-unit">
+    <view class="form-row">
+      <view class="form-col">
+        <text class="label">施工人数</text>
         <input 
-          class="input-wrap"
+          class="input-wrap input-sm"
           type="number"
-          style="height: 80rpx;"
-          placeholder="请输入进度百分比(0-100)"
-          value="{{log.content.progressPercent}}"
-          bindinput="onProgressPercentInput"
+          style="height: 72rpx;"
+          placeholder="人数"
+          value="{{log.content.personnelCount}}"
+          bindinput="onPersonnelCountInput"
         />
-        <text class="unit">%</text>
+      </view>
+      <view class="form-col form-col-unit">
+        <text class="label">进度</text>
+        <view class="input-with-unit">
+          <input 
+            class="input-wrap input-sm"
+            type="number"
+            style="height: 72rpx;"
+            placeholder="0-100"
+            value="{{log.content.progressPercent}}"
+            bindinput="onProgressPercentInput"
+          />
+          <text class="unit">%</text>
+        </view>
+      </view>
+    </view>
+    <!-- 机械台班单独一行 -->
+    <view class="form-item machinery-row">
+      <text class="label">机械台班</text>
+      <view class="machinery-list">
+        <view class="machinery-item" wx:for="{{log.content.machineryList}}" wx:key="index">
+          <input 
+            class="input-wrap input-xs"
+            placeholder="类型"
+            value="{{item.type}}"
+            bindinput="onMachineryTypeInput"
+            data-index="{{index}}"
+          />
+          <input 
+            class="input-wrap input-xs input-count"
+            type="digit"
+            placeholder="台班"
+            value="{{item.count}}"
+            bindinput="onMachineryCountInput"
+            data-index="{{index}}"
+          />
+          <text 
+            class="remove-btn" 
+            wx:if="{{log.content.machineryList.length > 1}}"
+            bindtap="removeMachinery" 
+            data-index="{{index}}"
+          >✕</text>
+        </view>
+        <view class="add-btn" bindtap="addMachinery">+ 新增机械类型</view>
       </view>
     </view>
   </view>

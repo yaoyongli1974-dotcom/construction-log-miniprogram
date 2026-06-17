@@ -30,6 +30,9 @@ Page({
       });
       this.loadLogs();
       app.globalData.needRefresh = false;
+    } else if (this.data.logs.length === 0 && !this.data.loading) {
+      // 列表为空且不在加载中，尝试加载（处理云开发延迟就绪的情况）
+      this.loadLogs();
     }
   },
 
@@ -40,8 +43,9 @@ Page({
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     this.setData({
-      currentDate: `${year}-${month}-${day}`,
-      searchDate: `${year}-${month}-${day}`
+      currentDate: `${year}-${month}-${day}`
+      // 注意：不设置 searchDate，让初始加载不带日期筛选
+      // 只有用户主动选择日期后才会设置 searchDate
     });
   },
 
@@ -66,9 +70,9 @@ Page({
         data: {
           page: page,
           pageSize: pageSize,
-          startDate: searchDate ? searchDate : '',
-          endDate: searchDate ? searchDate : '',
-          projectName: searchProject
+          startDate: searchDate || '',
+          endDate: searchDate || '',
+          projectName: searchProject || ''
         }
       });
       

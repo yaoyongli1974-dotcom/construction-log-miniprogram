@@ -101,6 +101,31 @@
   display: block;
 }
 
+/* 机械台班单独一行 */
+.info-machinery {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: var(--bg-color);
+  border-radius: 12rpx;
+}
+
+.info-machinery .info-label {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.info-machinery .info-value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: var(--primary-color);
+  display: block;
+}
+
 /* 图片网格 */
 .images-grid {
   display: flex;

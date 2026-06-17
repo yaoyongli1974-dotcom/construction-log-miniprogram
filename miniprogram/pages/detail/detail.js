@@ -58,12 +58,15 @@ Page({
 
   // 编辑日志
   editLog() {
-    wx.navigateTo({
-      url: `/pages/create/create?id=${this.data.logId}&mode=edit`
+    // create 是 TabBar 页面，不能用 navigateTo，改用 switchTab + globalData 传参
+    app.globalData.editLogId = this.data.logId;
+    app.globalData.editMode = true;
+    wx.switchTab({
+      url: '/pages/create/create'
     });
   },
 
-  // 删除日志
+  // 删除日志（调用云函数）
   async deleteLog() {
     wx.showModal({
       title: '确认删除',
@@ -73,28 +76,49 @@ Page({
           try {
             wx.showLoading({ title: '删除中...' });
             
-            const db = wx.cloud.database();
-            await db.collection('logs').doc(this.data.logId).remove();
+            console.log('[删除] 准备调用deleteLog云函数，logId:', this.data.logId);
             
-            wx.hideLoading();
-            wx.showToast({
-              title: '删除成功',
-              icon: 'success'
+            // 调用云函数删除（云函数有管理员权限）
+            const result = await wx.cloud.callFunction({
+              name: 'deleteLog',
+              data: { logId: this.data.logId }
             });
             
-            // 返回首页并刷新
-            const pages = getCurrentPages();
-            if (pages.length > 1) {
-              const prevPage = pages[pages.length - 2];
-              prevPage.setData({ needRefresh: true });
+            console.log('[删除] 云函数返回结果:', JSON.stringify(result));
+            
+            wx.hideLoading();
+            
+            if (result.result && result.result.success) {
+              wx.showToast({
+                title: '删除成功',
+                icon: 'success'
+              });
+              
+              // 设置刷新标记（使用 globalData，index.js 的 onShow 会检查）
+              app.globalData.needRefresh = true;
+              
+              // 同时设置上一页的 data（兜底，兼容两种检查方式）
+              const pages = getCurrentPages();
+              if (pages.length > 1) {
+                const prevPage = pages[pages.length - 2];
+                prevPage.setData({ needRefresh: true });
+              }
+              
+              wx.navigateBack();
+            } else {
+              wx.showToast({
+                title: result.result?.message || '删除失败',
+                icon: 'none'
+              });
             }
-            wx.navigateBack();
           } catch (err) {
             console.error('删除日志失败', err);
+            console.error('[删除] 错误详情:', JSON.stringify(err));
             wx.hideLoading();
             wx.showToast({
-              title: '删除失败',
-              icon: 'none'
+              title: '删除失败：' + (err.errMsg || err.message || '未知错误'),
+              icon: 'none',
+              duration: 3000
             });
           }
         }

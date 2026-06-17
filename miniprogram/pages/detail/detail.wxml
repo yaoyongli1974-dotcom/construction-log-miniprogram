@@ -45,13 +45,20 @@
           <text class="info-value">{{log.content.personnelCount || 0}}人</text>
         </view>
         <view class="info-item">
-          <text class="info-label">机械台数</text>
-          <text class="info-value">{{log.content.machineryCount || 0}}台</text>
-        </view>
-        <view class="info-item">
           <text class="info-label">进度百分比</text>
           <text class="info-value">{{log.content.progressPercent || 0}}%</text>
         </view>
+      </view>
+      <!-- 机械台班单独一行 -->
+      <view class="info-machinery">
+        <text class="info-label">机械台班</text>
+        <text class="info-value" wx:if="{{log.content.machineryList && log.content.machineryList.length > 0}}">
+          <text wx:for="{{log.content.machineryList}}" wx:key="index">
+            {{item.type}} {{item.count}}台班<text wx:if="{{index < log.content.machineryList.length - 1}}">、</text>
+          </text>
+        </text>
+        <text class="info-value" wx:elif="{{log.content.machineryCount}}">{{log.content.machineryCount || 0}}台</text>
+        <text class="info-value" wx:else>0台班</text>
       </view>
     </view>
     

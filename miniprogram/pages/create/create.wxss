@@ -14,6 +14,38 @@
   margin-bottom: 0;
 }
 
+/* 三个数字字段横向排列 */
+.form-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.form-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-col .label {
+  font-size: 26rpx;
+  color: var(--text-secondary, #888);
+  margin-bottom: 12rpx;
+}
+
+.form-col-unit {
+  flex: 1.2;
+}
+
+.input-sm {
+  font-size: 28rpx;
+  padding: 12rpx 16rpx;
+}
+
+.input-sm::placeholder {
+  font-size: 24rpx;
+  color: var(--text-hint, #bbb);
+}
+
 /* label 和按钮在同一行 */
 .label-row {
   display: flex;
@@ -100,6 +132,115 @@
   padding: 16rpx 0;
 }
 
+/* 天气选择 - 标签网格 */
+.weather-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.weather-tag {
+  font-size: 26rpx;
+  padding: 12rpx 24rpx;
+  border: 2rpx solid var(--border-color, #E5E5E5);
+  border-radius: 8rpx;
+  background: #FFFFFF;
+  color: var(--text-secondary, #888);
+  transition: all 0.2s;
+}
+
+.weather-tag:active {
+  opacity: 0.7;
+}
+
+.weather-tag-active {
+  background: var(--primary-color, #07C160);
+  color: #FFFFFF;
+  border-color: var(--primary-color, #07C160);
+  font-weight: 500;
+}
+
+/* 天气下拉菜单 */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-value {
+  border: 2rpx solid var(--border-color, #E5E5E5);
+  border-radius: 8rpx;
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: var(--text-primary, #333);
+  background: #FFFFFF;
+  min-height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dropdown-value:active {
+  background: #F5F5F5;
+}
+
+.dropdown-arrow {
+  font-size: 24rpx;
+  color: var(--text-hint, #999);
+  margin-left: 10rpx;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 2rpx solid var(--border-color, #E5E5E5);
+  border-radius: 8rpx;
+  margin-top: 8rpx;
+  max-height: 400rpx;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: var(--text-primary, #333);
+  border-bottom: 2rpx solid #F5F5F5;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:active {
+  background: #F5F5F5;
+}
+
+.dropdown-item-active {
+  color: var(--primary-color, #07C160);
+  font-weight: 500;
+  background: rgba(7, 193, 96, 0.08);
+}
+
+/* 天气下拉菜单遮罩层 */
+.dropdown-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+}
+
 /* 位置选择器 */
 .location-selector {
   border: 2rpx solid var(--border-color);
@@ -175,6 +316,21 @@
   color: var(--text-hint);
   margin-left: 10rpx;
   flex-shrink: 0;
+}
+
+/* 机械列表 - 单独一行时的样式 */
+.machinery-row {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx solid var(--border-color);
+}
+
+.machinery-row .label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 16rpx;
+  display: block;
 }
 
 /* 图片上传 */
@@ -348,4 +504,49 @@
   padding: 60rpx 0;
   font-size: 28rpx;
   color: var(--text-hint);
+}
+
+/* 机械列表 */
+.machinery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+.machinery-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.input-xs {
+  font-size: 26rpx;
+  padding: 8rpx 14rpx;
+  height: 60rpx;
+}
+
+.input-count {
+  width: 140rpx;
+  flex-shrink: 0;
+}
+
+.remove-btn {
+  font-size: 28rpx;
+  color: #FF4D4F;
+  padding: 8rpx;
+  flex-shrink: 0;
+}
+
+.remove-btn:active {
+  opacity: 0.6;
+}
+
+.add-btn {
+  font-size: 26rpx;
+  color: var(--primary-color, #07C160);
+  padding: 16rpx 0;
+  text-align: center;
+  border-top: 2rpx dashed var(--border-color, #E5E5E5);
+  margin-top: 8rpx;
 }
