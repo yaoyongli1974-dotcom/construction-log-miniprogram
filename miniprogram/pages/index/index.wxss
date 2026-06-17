@@ -1,0 +1,155 @@
+/* pages/index/index.wxss - 首页样式 */
+
+.container {
+  padding: 20rpx;
+  padding-bottom: 120rpx;
+}
+
+/* 搜索栏 */
+.search-bar {
+  margin-bottom: 20rpx;
+}
+
+.search-toggle {
+  text-align: center;
+  padding: 16rpx;
+  background: var(--card-bg);
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.toggle-text {
+  font-size: 28rpx;
+  color: var(--primary-color);
+}
+
+.search-panel {
+  background: var(--card-bg);
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.search-item {
+  margin-bottom: 20rpx;
+}
+
+.search-input {
+  border: 2rpx solid var(--border-color);
+  border-radius: 8rpx;
+  padding: 16rpx;
+  font-size: 28rpx;
+}
+
+.picker-value {
+  border: 2rpx solid var(--border-color);
+  border-radius: 8rpx;
+  padding: 16rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  background: #FFFFFF;
+}
+
+.search-btn {
+  width: 100%;
+  margin-top: 10rpx;
+}
+
+/* 日志列表 */
+.log-list {
+  margin-top: 20rpx;
+}
+
+.log-card {
+  transition: all 0.3s ease;
+}
+
+.log-card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.log-header {
+  margin-bottom: 16rpx;
+}
+
+.log-date {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.log-weather {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.log-project {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--primary-color);
+  margin-bottom: 16rpx;
+}
+
+.log-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-right: 8rpx;
+}
+
+.summary-value {
+  font-size: 26rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.log-footer {
+  padding-top: 16rpx;
+  border-top: 2rpx solid var(--border-color);
+}
+
+.log-images {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}
+
+/* 浮动按钮 */
+.fab-button {
+  position: fixed;
+  right: 40rpx;
+  bottom: 180rpx;  /* 提高一些，避免被 TabBar 遮挡 */
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: var(--primary-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8rpx 24rpx rgba(26, 173, 25, 0.4);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.fab-button:active {
+  transform: scale(0.9);
+  box-shadow: 0 4rpx 12rpx rgba(26, 173, 25, 0.4);
+}
+
+.fab-icon {
+  font-size: 48rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+}

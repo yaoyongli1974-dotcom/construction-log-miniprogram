@@ -1,0 +1,51 @@
+<!--pages/share/share.wxml - 分享页面模板 -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+  
+  <!-- 错误状态 -->
+  <view class="error-wrap" wx:elif="{{error}}">
+    <text class="error-text">加载失败</text>
+    <button class="btn-primary" bindtap="loadSharedLog" data-id="{{logId}}">重试</button>
+  </view>
+  
+  <!-- 分享日志内容 -->
+  <block wx:elif="{{log}}">
+    <view class="share-card card">
+      <view class="share-header">
+        <text class="share-title">施工日志</text>
+        <text class="share-date">{{log.date}}</text>
+      </view>
+      
+      <view class="share-project">{{log.projectName}}</view>
+      
+      <view class="share-weather" wx:if="{{log.weather}}">
+        <text>{{log.weather}}</text>
+      </view>
+      
+      <view class="share-content" wx:if="{{log.content.constructionContent}}">
+        <text class="content-title">施工内容</text>
+        <text class="content-text">{{log.content.constructionContent}}</text>
+      </view>
+      
+      <view class="share-stats">
+        <view class="stat">
+          <text class="stat-label">进度</text>
+          <text class="stat-value">{{log.content.progressPercent || 0}}%</text>
+        </view>
+        <view class="stat">
+          <text class="stat-label">人数</text>
+          <text class="stat-value">{{log.content.personnelCount || 0}}人</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 操作按钮 -->
+    <view class="btn-group">
+      <button class="btn-primary" bindtap="viewLogDetail">查看详情</button>
+      <button class="btn-secondary" bindtap="useMiniProgram">使用小程序</button>
+    </view>
+  </block>
+</view>

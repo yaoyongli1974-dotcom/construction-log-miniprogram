@@ -1,0 +1,44 @@
+<!--components/log-card/log-card.wxml - 日志卡片组件模板 -->
+<view class="log-card" bindtap="onTap">
+  <view class="log-header flex-between">
+    <text class="log-date">{{log.date}}</text>
+    <text class="log-weather">{{log.weather}}</text>
+  </view>
+  
+  <view class="log-project">{{log.projectName}}</view>
+  
+  <view class="log-summary">
+    <view class="summary-item">
+      <text class="summary-label">进度：</text>
+      <text class="summary-value">{{log.content.progressPercent}}%</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-label">人数：</text>
+      <text class="summary-value">{{log.content.personnelCount}}人</text>
+    </view>
+  </view>
+  
+  <view class="log-footer flex-between">
+    <text class="log-status badge {{log.status === 'published' ? 'badge-success' : 'badge-warning'}}">
+      {{log.status === 'published' ? '已发布' : '草稿'}}
+    </text>
+    <text class="log-images" wx:if="{{log.images && log.images.length > 0}}">
+      📷 {{log.images.length}}张图片
+    </text>
+  </view>
+  
+  <!-- 图片预览 -->
+  <view class="images-preview" wx:if="{{log.images && log.images.length > 0}}">
+    <image 
+      wx:for="{{log.images}}" 
+      wx:key="index"
+      wx:if="{{index < 3}}"
+      src="{{item}}" 
+      mode="aspectFill" 
+      class="preview-thumb"
+      bindtap="previewImage"
+      data-url="{{item}}"
+    />
+    <text class="more-images" wx:if="{{log.images.length > 3}}">+{{log.images.length - 3}}</text>
+  </view>
+</view>

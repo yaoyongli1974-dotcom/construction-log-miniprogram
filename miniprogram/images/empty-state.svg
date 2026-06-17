@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+    <text x="200" y="100" font-family="Arial, sans-serif" font-size="80" text-anchor="middle" opacity="0.3">📋</text>
+    <text x="200" y="180" font-family="Microsoft YaHei, Arial, sans-serif" font-size="24" fill="#999999" text-anchor="middle">暂无施工日志</text>
+    <text x="200" y="220" font-family="Microsoft YaHei, Arial, sans-serif" font-size="18" fill="#BDBDBD" text-anchor="middle">点击下方按钮开始记录</text>
+  </svg>

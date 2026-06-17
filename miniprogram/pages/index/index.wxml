@@ -1,0 +1,97 @@
+<!--pages/index/index.wxml - 首页模板 -->
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-toggle" bindtap="toggleSearch">
+      <text class="toggle-text">{{showSearch ? '收起搜索' : '展开搜索'}}</text>
+    </view>
+    
+    <view class="search-panel" wx:if="{{showSearch}}">
+      <view class="search-item">
+        <text class="label">日期筛选</text>
+        <picker mode="date" value="{{searchDate}}" bindchange="onDateChange">
+          <view class="picker-value">{{searchDate || '选择日期'}}</view>
+        </picker>
+      </view>
+      
+      <view class="search-item">
+        <text class="label">项目筛选</text>
+        <input 
+          class="search-input" 
+          placeholder="输入项目名称" 
+          value="{{searchProject}}"
+          bindinput="onProjectInput"
+          bindconfirm="onSearch"
+        />
+      </view>
+      
+      <button class="btn-primary search-btn" bindtap="onSearch">搜索</button>
+    </view>
+  </view>
+  
+  <!-- 日志列表 -->
+  <view class="log-list">
+    <block wx:if="{{logs.length > 0}}">
+      <view 
+        class="log-card card" 
+        wx:for="{{logs}}" 
+        wx:key="_id"
+        bindtap="viewLogDetail"
+        data-id="{{item._id}}"
+      >
+        <view class="log-header flex-between">
+          <text class="log-date">{{item.date}}</text>
+          <text class="log-weather">{{item.weather}}</text>
+        </view>
+        
+        <view class="log-project">{{item.projectName}}</view>
+        
+        <view class="log-summary">
+          <view class="summary-item">
+            <text class="summary-label">进度：</text>
+            <text class="summary-value">{{item.content.progressPercent}}%</text>
+          </view>
+          <view class="summary-item">
+            <text class="summary-label">人数：</text>
+            <text class="summary-value">{{item.content.personnelCount}}人</text>
+          </view>
+        </view>
+        
+        <view class="log-footer flex-between">
+          <text class="log-status badge {{item.status === 'published' ? 'badge-success' : 'badge-warning'}}">
+            {{item.status === 'published' ? '已发布' : '草稿'}}
+          </text>
+          <text class="log-images" wx:if="{{item.images && item.images.length > 0}}">
+            📷 {{item.images.length}}张图片
+          </text>
+        </view>
+      </view>
+    </block>
+    
+    <!-- 空状态 -->
+    <view class="empty-wrap" wx:else>
+      <image class="empty-image" src="/images/empty.png" mode="aspectFit"></image>
+      <text class="empty-text">暂无施工日志</text>
+      <button class="btn-primary" bindtap="createNewLog">创建第一条日志</button>
+    </view>
+  </view>
+  
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+  
+  <view class="loading-wrap" wx:if="{{loadingMore}}">
+    <text class="loading-text">加载更多...</text>
+  </view>
+  
+  <!-- 没有更多 -->
+  <view class="loading-wrap" wx:if="{{!hasMore && logs.length > 0}}">
+    <text class="loading-text">没有更多了</text>
+  </view>
+  
+  <!-- 创建按钮 -->
+  <view class="fab-button" bindtap="createNewLog">
+    <text class="fab-icon">+</text>
+  </view>
+</view>

@@ -1,0 +1,26 @@
+<!--components/photo-upload/photo-upload.wxml - 图片上传组件模板 -->
+<view class="photo-upload-wrap">
+  <view class="images-list">
+    <view class="image-item" wx:for="{{images}}" wx:key="index">
+      <image 
+        src="{{item}}" 
+        mode="aspectFill" 
+        class="preview-image"
+        bindtap="previewImage"
+        data-url="{{item}}"
+      ></image>
+      <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">
+        <text class="delete-icon">×</text>
+      </view>
+    </view>
+    
+    <view class="add-image" bindtap="chooseImages" wx:if="{{images.length < maxCount}}">
+      <text class="add-icon">+</text>
+      <text class="add-text">添加照片</text>
+    </view>
+  </view>
+  
+  <view class="upload-tip" wx:if="{{images.length < maxCount}}">
+    <text class="tip-text">还可上传{{maxCount - images.length}}张图片</text>
+  </view>
+</view>

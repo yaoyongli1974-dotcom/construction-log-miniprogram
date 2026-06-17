@@ -1,0 +1,219 @@
+<!--pages/create/create.wxml - 新建日志模板 -->
+<view class="container">
+  <!-- 日期和天气 -->
+  <view class="card">
+    <view class="flex-between">
+      <view class="form-item">
+        <text class="label required">日期</text>
+        <picker mode="date" value="{{log.date}}" bindchange="onDateChange">
+          <view class="picker-value">{{log.date}}</view>
+        </picker>
+      </view>
+      
+      <view class="form-item weather-item">
+        <text class="label">天气</text>
+        <view class="weather-value">
+          <text wx:if="{{weatherLoading}}">获取中...</text>
+          <text wx:else>{{log.weather || '未获取'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 项目信息 -->
+  <view class="card">
+    <view class="form-item">
+      <text class="label required">项目名称</text>
+      <input 
+        class="input-wrap"
+        style="height: 80rpx;"
+        placeholder="请输入项目名称"
+        value="{{log.projectName}}"
+        bindinput="onProjectNameInput"
+      />
+    </view>
+    
+    <view class="form-item">
+      <text class="label">项目位置</text>
+      <view class="location-selector" bindtap="onChooseLocation">
+        <text wx:if="{{locationLoading}}" class="location-loading">获取中...</text>
+        <block wx:else>
+          <text wx:if="{{log.location.name}}" class="location-name">{{log.location.name}}</text>
+          <text wx:else class="location-placeholder">点击选择位置</text>
+          <text class="location-arrow">📍</text>
+        </block>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 施工内容 -->
+  <view class="card">
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label required">施工内容</text>
+        <text class="history-btn" bindtap="showHistory" data-field="constructionContent">📋 历史</text>
+      </view>
+      <textarea 
+        class="input-wrap textarea textarea-large"
+        style="height: 400rpx;"
+        placeholder="请输入今日施工内容"
+        value="{{log.content.constructionContent}}"
+        bindinput="onConstructionContentInput"
+        maxlength="500"
+      />
+    </view>
+  </view>
+  
+  <!-- 人员和进度 -->
+  <view class="card">
+    <view class="form-item">
+      <text class="label">施工人数</text>
+      <input 
+        class="input-wrap"
+        type="number"
+        style="height: 80rpx;"
+        placeholder="请输入施工人数"
+        value="{{log.content.personnelCount}}"
+        bindinput="onPersonnelCountInput"
+      />
+    </view>
+    
+    <view class="form-item">
+      <text class="label">机械台数</text>
+      <input 
+        class="input-wrap"
+        type="number"
+        style="height: 80rpx;"
+        placeholder="请输入机械台数"
+        value="{{log.content.machineryCount}}"
+        bindinput="onMachineryCountInput"
+      />
+    </view>
+    
+    <view class="form-item form-item-inline">
+      <view class="label-row" style="width: 160rpx; flex-shrink: 0;">
+        <text class="label">进度百分比</text>
+        <text class="history-btn" bindtap="showHistory" data-field="progressPercent">📋</text>
+      </view>
+      <view class="input-with-unit">
+        <input 
+          class="input-wrap"
+          type="number"
+          style="height: 80rpx;"
+          placeholder="请输入进度百分比(0-100)"
+          value="{{log.content.progressPercent}}"
+          bindinput="onProgressPercentInput"
+        />
+        <text class="unit">%</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 质量和安全 -->
+  <view class="card">
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label">质量检查</text>
+        <text class="history-btn" bindtap="showHistory" data-field="qualityCheck">📋 历史</text>
+      </view>
+      <textarea 
+        class="input-wrap textarea textarea-tall"
+        style="height: 280rpx;"
+        placeholder="请输入质量检查情况"
+        value="{{log.content.qualityCheck}}"
+        bindinput="onQualityCheckInput"
+        maxlength="300"
+      />
+    </view>
+    
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label">安全检查</text>
+        <text class="history-btn" bindtap="showHistory" data-field="safetyCheck">📋 历史</text>
+      </view>
+      <textarea 
+        class="input-wrap textarea textarea-tall"
+        style="height: 280rpx;"
+        placeholder="请输入安全检查情况"
+        value="{{log.content.safetyCheck}}"
+        bindinput="onSafetyCheckInput"
+        maxlength="300"
+      />
+    </view>
+  </view>
+  
+  <!-- 问题和计划 -->
+  <view class="card">
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label">存在问题</text>
+        <text class="history-btn" bindtap="showHistory" data-field="issues">📋 历史</text>
+      </view>
+      <textarea 
+        class="input-wrap textarea textarea-tall"
+        style="height: 280rpx;"
+        placeholder="请输入存在问题"
+        value="{{log.content.issues}}"
+        bindinput="onIssuesInput"
+        maxlength="300"
+      />
+    </view>
+    
+    <view class="form-item">
+      <view class="label-row">
+        <text class="label">明日计划</text>
+        <text class="history-btn" bindtap="showHistory" data-field="nextPlan">📋 历史</text>
+      </view>
+      <textarea 
+        class="input-wrap textarea textarea-tall"
+        style="height: 280rpx;"
+        placeholder="请输入明日计划"
+        value="{{log.content.nextPlan}}"
+        bindinput="onNextPlanInput"
+        maxlength="300"
+      />
+    </view>
+  </view>
+  
+  <!-- 现场照片 -->
+  <view class="card">
+    <view class="form-item">
+      <text class="label">现场照片</text>
+      <view class="images-wrap">
+        <view class="image-item" wx:for="{{log.images}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill" class="preview-image"></image>
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        
+        <view class="add-image" bindtap="chooseImages" wx:if="{{log.images.length < 9}}">
+          <text class="add-icon">+</text>
+          <text class="add-text">添加照片</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="btn-group">
+    <button class="btn-secondary" bindtap="saveAsDraft" disabled="{{saving}}">保存草稿</button>
+    <button class="btn-primary" bindtap="publishLog" disabled="{{saving}}">发布日志</button>
+  </view>
+</view>
+
+<!-- 历史记录面板（遮罩层 + 居中弹出） -->
+<view class="history-mask" wx:if="{{showHistory}}" bindtap="closeHistory"></view>
+<view class="history-panel-modal" wx:if="{{showHistory}}">
+  <view class="history-header">
+    <text class="history-title">历史记录 - {{historyFieldName}}</text>
+    <text class="history-close" bindtap="closeHistory">✕</text>
+  </view>
+  <scroll-view class="history-list" scroll-y="true" wx:if="{{historyList.length > 0}}">
+    <view class="history-item" wx:for="{{historyList}}" wx:key="index" bindtap="selectHistory" data-value="{{item}}">
+      <text class="history-text">{{item}}</text>
+      <text class="history-delete" catchtap="deleteHistory" data-index="{{index}}">删除</text>
+    </view>
+  </scroll-view>
+  <view class="history-empty" wx:else>
+    <text>暂无历史记录</text>
+  </view>
+</view>

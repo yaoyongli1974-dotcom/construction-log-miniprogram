@@ -1,0 +1,15 @@
+<!--components/weather/weather.wxml - 天气组件模板 -->
+<view class="weather-wrap">
+  <view class="weather-content" wx:if="{{!loading}}">
+    <text class="weather-icon">🌤️</text>
+    <text class="weather-text">{{weather || '未获取'}}</text>
+  </view>
+  <view class="weather-loading" wx:else>
+    <text class="loading-icon">⏳</text>
+    <text class="loading-text">获取中...</text>
+  </view>
+  
+  <view class="refresh-btn" bindtap="refreshWeather">
+    <text class="refresh-icon">🔄</text>
+  </view>
+</view>

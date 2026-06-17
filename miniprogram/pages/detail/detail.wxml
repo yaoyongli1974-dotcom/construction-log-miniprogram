@@ -1,0 +1,109 @@
+<!--pages/detail/detail.wxml - 日志详情模板 -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+  
+  <!-- 错误状态 -->
+  <view class="error-wrap" wx:elif="{{error}}">
+    <text class="error-text">加载失败</text>
+    <button class="btn-primary" bindtap="loadLogDetail" data-id="{{logId}}">重试</button>
+  </view>
+  
+  <!-- 日志详情 -->
+  <block wx:elif="{{log}}">
+    <!-- 头部信息 -->
+    <view class="card header-card">
+      <view class="header-top flex-between">
+        <text class="log-date">{{log.date}}</text>
+        <text class="log-status badge {{log.status === 'published' ? 'badge-success' : 'badge-warning'}}">
+          {{log.status === 'published' ? '已发布' : '草稿'}}
+        </text>
+      </view>
+      
+      <view class="log-project">{{log.projectName}}</view>
+      
+      <view class="log-weather" wx:if="{{log.weather}}">
+        <text class="weather-icon">🌤️</text>
+        <text class="weather-text">{{log.weather}}</text>
+      </view>
+    </view>
+    
+    <!-- 施工内容 -->
+    <view class="card" wx:if="{{log.content.constructionContent}}">
+      <view class="section-title">施工内容</view>
+      <view class="section-content">{{log.content.constructionContent}}</view>
+    </view>
+    
+    <!-- 人员和进度 -->
+    <view class="card">
+      <view class="section-title">人员和进度</view>
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">施工人数</text>
+          <text class="info-value">{{log.content.personnelCount || 0}}人</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">机械台数</text>
+          <text class="info-value">{{log.content.machineryCount || 0}}台</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">进度百分比</text>
+          <text class="info-value">{{log.content.progressPercent || 0}}%</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 质量和安全 -->
+    <view class="card" wx:if="{{log.content.qualityCheck || log.content.safetyCheck}}">
+      <view class="section-title">质量和安全</view>
+      <view class="section-content" wx:if="{{log.content.qualityCheck}}">
+        <text class="sub-title">质量检查</text>
+        <text class="sub-content">{{log.content.qualityCheck}}</text>
+      </view>
+      <view class="section-content" wx:if="{{log.content.safetyCheck}}">
+        <text class="sub-title">安全检查</text>
+        <text class="sub-content">{{log.content.safetyCheck}}</text>
+      </view>
+    </view>
+    
+    <!-- 问题和计划 -->
+    <view class="card" wx:if="{{log.content.issues || log.content.nextPlan}}">
+      <view class="section-title">问题和计划</view>
+      <view class="section-content" wx:if="{{log.content.issues}}">
+        <text class="sub-title">存在问题</text>
+        <text class="sub-content">{{log.content.issues}}</text>
+      </view>
+      <view class="section-content" wx:if="{{log.content.nextPlan}}">
+        <text class="sub-title">明日计划</text>
+        <text class="sub-content">{{log.content.nextPlan}}</text>
+      </view>
+    </view>
+    
+    <!-- 现场照片 -->
+    <view class="card" wx:if="{{log.images && log.images.length > 0}}">
+      <view class="section-title">现场照片</view>
+      <view class="images-grid">
+        <image 
+          wx:for="{{log.images}}" 
+          wx:key="index"
+          src="{{item}}" 
+          mode="aspectFill" 
+          class="grid-image"
+          bindtap="previewImage"
+          data-url="{{item}}"
+        />
+      </view>
+    </view>
+    
+    <!-- 操作按钮 -->
+    <view class="btn-group">
+      <button class="btn-secondary" bindtap="editLog">编辑</button>
+      <button class="btn-danger" bindtap="deleteLog">删除</button>
+    </view>
+    
+    <!-- 分享按钮 -->
+    <button class="btn-primary share-btn" open-type="share">分享日志</button>
+  </block>
+</view>
