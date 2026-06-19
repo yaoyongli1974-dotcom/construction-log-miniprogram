@@ -268,8 +268,7 @@ Page({
         name: 'export' + (exportFormat === 'excel' ? 'Excel' : 'PDF'),
         data: {
           startDate: exportStartDate,
-          endDate: exportEndDate,
-          cloudPath: cloudPath
+          endDate: exportEndDate
         }
       });
       
@@ -281,34 +280,47 @@ Page({
           fileID: fileID
         });
         
-        // 分享或保存文件
-        wx.shareFileMessage({
-          filePath: downloadRes.tempFilePath,
-          success: () => {
-            wx.showToast({ title: '导出成功', icon: 'success' });
-          },
-          fail: (err) => {
-            // 如果分享失败，提示用户保存
-            console.log('[导出] 分享失败，提示保存', err);
-            wx.showModal({
-              title: '导出成功',
-              content: '文件已生成，请点击「保存」按钮保存到本地',
-              confirmText: '保存',
-              success: (modalRes) => {
-                if (modalRes.confirm) {
-                  wx.openDocument({
-                    filePath: downloadRes.tempFilePath,
-                    success: () => console.log('[导出] 打开文档成功'),
-                    fail: (openErr) => {
-                      console.error('[导出] 打开文档失败', openErr);
-                      wx.showToast({ title: '打开文件失败', icon: 'none' });
-                    }
-                  });
-                }
+        wx.hideLoading();
+        this.setData({ exporting: false, showExport: false });
+        
+        const count = res.result.count || 0;
+        const isHTML = (res.result.format === 'html');
+        
+        if (isHTML) {
+          // PDF格式：生成的是标准施工日志HTML模板
+          wx.showModal({
+            title: '导出成功（共' + count + '条）',
+            content: '已按标准施工日志模板生成，点击确定打开预览（可在浏览器中打印为PDF）',
+            confirmText: '打开预览',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openDocument({
+                  filePath: downloadRes.tempFilePath,
+                  fileType: 'html',
+                  showMenu: true,
+                  success: () => console.log('[导出] 打开HTML成功'),
+                  fail: () => {
+                    // HTML可能无法直接打开，提示用户
+                    console.log('[导出] HTML无法直接打开，尝试保存');
+                  }
+                });
               }
-            });
-          }
-        });
+            }
+          });
+        } else {
+          // Excel格式：直接打开
+          wx.openDocument({
+            filePath: downloadRes.tempFilePath,
+            showMenu: true,
+            success: () => {
+              wx.showToast({ title: '导出成功（共' + count + '条）', icon: 'success' });
+            },
+            fail: (openErr) => {
+              console.error('[导出] 打开文档失败', openErr);
+              wx.showToast({ title: '文件已生成', icon: 'none' });
+            }
+          });
+        }
       } else {
         throw new Error(res.result.message || '导出失败');
       }
