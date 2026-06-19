@@ -138,12 +138,12 @@
           <text class="format-name">Excel</text>
         </view>
         <view 
-          class="format-option {{exportFormat === 'pdf' ? 'format-active' : ''}}"
+          class="format-option {{exportFormat === 'word' ? 'format-active' : ''}}"
           bindtap="selectExportFormat"
-          data-format="pdf"
+          data-format="word"
         >
           <text class="format-icon">📄</text>
-          <text class="format-name">PDF</text>
+          <text class="format-name">Word</text>
         </view>
       </view>
     </view>

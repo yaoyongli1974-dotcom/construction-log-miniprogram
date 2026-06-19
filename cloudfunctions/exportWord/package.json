@@ -1,7 +1,7 @@
 {
-  "name": "exportPDF",
+  "name": "exportWord",
   "version": "1.0.0",
-  "description": "导出施工日志为 HTML/PDF 文件",
+  "description": "导出施工日志为 Word 文档（.doc 格式）",
   "main": "index.js",
   "dependencies": {
     "wx-server-sdk": "~2.6.3"

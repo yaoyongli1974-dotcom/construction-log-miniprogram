@@ -261,11 +261,11 @@ Page({
     wx.showLoading({ title: '正在生成文件...', mask: true });
     
     try {
-      const cloudPath = `${exportFormat}/${exportStartDate}_${exportEndDate}.${exportFormat === 'excel' ? 'xlsx' : 'pdf'}`;
+      const cloudPath = `${exportFormat}/${exportStartDate}_${exportEndDate}.${exportFormat === 'excel' ? 'xlsx' : 'doc'}`;
       
       // 调用云函数生成文件
       const res = await wx.cloud.callFunction({
-        name: 'export' + (exportFormat === 'excel' ? 'Excel' : 'PDF'),
+        name: 'export' + (exportFormat === 'excel' ? 'Excel' : 'Word'),
         data: {
           startDate: exportStartDate,
           endDate: exportEndDate
@@ -274,53 +274,40 @@ Page({
       
       if (res.result && res.result.success) {
         const fileID = res.result.fileID;
+        const fileUrl = res.result.fileUrl;
         
-        // 下载文件
-        const downloadRes = await wx.cloud.downloadFile({
-          fileID: fileID
-        });
+        let tempFilePath;
+        
+        if (fileID) {
+          // 用云存储 fileID 下载
+          const downloadRes = await wx.cloud.downloadFile({ fileID });
+          tempFilePath = downloadRes.tempFilePath;
+        } else if (fileUrl) {
+          // 用临时链接下载
+          const downloadRes = await wx.downloadFile({ url: fileUrl });
+          tempFilePath = downloadRes.tempFilePath;
+        } else {
+          throw new Error('未获取到文件地址');
+        }
         
         wx.hideLoading();
         this.setData({ exporting: false, showExport: false });
         
         const count = res.result.count || 0;
-        const isHTML = (res.result.format === 'html');
         
-        if (isHTML) {
-          // PDF格式：生成的是标准施工日志HTML模板
-          wx.showModal({
-            title: '导出成功（共' + count + '条）',
-            content: '已按标准施工日志模板生成，点击确定打开预览（可在浏览器中打印为PDF）',
-            confirmText: '打开预览',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                wx.openDocument({
-                  filePath: downloadRes.tempFilePath,
-                  fileType: 'html',
-                  showMenu: true,
-                  success: () => console.log('[导出] 打开HTML成功'),
-                  fail: () => {
-                    // HTML可能无法直接打开，提示用户
-                    console.log('[导出] HTML无法直接打开，尝试保存');
-                  }
-                });
-              }
-            }
-          });
-        } else {
-          // Excel格式：直接打开
-          wx.openDocument({
-            filePath: downloadRes.tempFilePath,
-            showMenu: true,
-            success: () => {
-              wx.showToast({ title: '导出成功（共' + count + '条）', icon: 'success' });
-            },
-            fail: (openErr) => {
-              console.error('[导出] 打开文档失败', openErr);
-              wx.showToast({ title: '文件已生成', icon: 'none' });
-            }
-          });
-        }
+        // 统一用 wx.openDocument() 打开（Excel 和 Word 都支持）
+        wx.openDocument({
+          filePath: tempFilePath,
+          fileType: exportFormat === 'excel' ? 'xlsx' : 'doc',
+          showMenu: true,
+          success: () => {
+            wx.showToast({ title: '导出成功（共' + count + '条）', icon: 'success' });
+          },
+          fail: (openErr) => {
+            console.error('[导出] 打开文档失败', openErr);
+            wx.showToast({ title: '文件已生成', icon: 'none' });
+          }
+        });
       } else {
         throw new Error(res.result.message || '导出失败');
       }
