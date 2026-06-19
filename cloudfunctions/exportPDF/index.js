@@ -65,9 +65,15 @@ function generateLogPageHTML(log) {
   <!-- 标题 -->
   <h1>施 工 日 志</h1>
 
-  <!-- 编号行 -->
-  <div class="header-row">
-    <span class="header-label">编号：</span>
+  <!-- 项目名称行 -->
+  <div class="header-row project-row">
+    <span class="header-label">项目名称：</span>
+    <span class="project-name">${esc(log.projectName)}</span>
+  </div>
+
+  <!-- 编号行（靠右） -->
+  <div class="header-row number-row">
+    <span class="header-label">编　号：</span>
     <span class="header-line"></span>
     <span class="form-type">表 A5</span>
   </div>
@@ -129,16 +135,13 @@ function generateLogPageHTML(log) {
       </td>
     </tr>
     
-    <!-- 第8行：签名行 -->
+    <!-- 第8行：签名行（2列：建造师 + 记录人） -->
     <tr class="sign-row">
-      <td colspan="2" class="sign-cell">
+      <td colspan="3" class="sign-cell">
         <span class="sign-name">建造师（项目经理）</span><span class="sign-line"></span>
       </td>
-      <td colspan="2" class="sign-cell">
+      <td colspan="3" class="sign-cell">
         <span class="sign-name">记　录　人</span><span class="sign-line"></span>
-      </td>
-      <td colspan="2" class="sign-cell">
-        <span class="sign-name">安高会</span><span class="sign-line"></span>
       </td>
     </tr>
   </table>
@@ -191,21 +194,32 @@ h1 {
   padding: 4px 0 10px;
 }
 
-/* ===== 编号行 ===== */
-.header-row {
+/* ===== 项目名称行 ===== */
+.project-row {
+  padding: 2px 0 6px;
+  font-size: 13px;
+}
+.project-name {
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* ===== 编号行（靠右） ===== */
+.number-row {
   display: flex;
   align-items: center;
-  padding: 0 0 6px 0;
+  justify-content: space-between;
+  padding: 0 0 8px;
   font-size: 12.5px;
 }
-.header-label { flex-shrink: 0; }
-.header-line {
+.number-row .header-label { flex-shrink: 0; }
+.number-row .header-line {
   flex-grow: 1;
   border-bottom: 1px solid #000;
-  min-width: 80px;
-  margin-right: 15px;
+  min-width: 60px;
+  margin: 0 12px;
 }
-.form-type { flex-shrink: 0; font-weight: bold; }
+.number-row .form-type { flex-shrink: 0; font-weight: bold; }
 
 /* ===== 表格 ===== */
 .main-table {
@@ -261,15 +275,21 @@ h1 {
 
 /* 签名行 */
 .sign-row td {
-  padding: 8px 6px !important;
+  padding: 10px 6px !important;
   text-align: center;
   border-top: 1.5px solid #000 !important;
 }
-.sign-cell { display: inline-flex; align-items: baseline; justify-content: center; gap: 6px; }
+.sign-cell {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+}
 .sign-name { font-size: 12.5px; white-space: nowrap; }
 .sign-line {
   display: inline-block;
-  width: 55px;
+  width: 70px;
   border-bottom: 1px solid #000;
   min-height: 16px;
   vertical-align: bottom;
