@@ -1,0 +1,9 @@
+{
+  "name": "exportPDF",
+  "version": "1.0.0",
+  "description": "导出施工日志为 HTML/PDF 文件",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

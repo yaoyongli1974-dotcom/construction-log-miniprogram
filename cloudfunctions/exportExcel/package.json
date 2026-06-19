@@ -1,0 +1,10 @@
+{
+  "name": "exportExcel",
+  "version": "1.0.0",
+  "description": "导出施工日志为 Excel 文件",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "xlsx": "^0.18.5"
+  }
+}

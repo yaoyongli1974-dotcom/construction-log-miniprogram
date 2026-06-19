@@ -94,4 +94,63 @@
   <view class="fab-button" bindtap="createNewLog">
     <text class="fab-icon">+</text>
   </view>
+  
+  <!-- 导出按钮 -->
+  <view class="export-button" bindtap="showExportPanel">
+    <text class="export-icon">📤</text>
+  </view>
+</view>
+
+<!-- 导出选项弹窗 -->
+<view class="export-mask" wx:if="{{showExport}}" bindtap="hideExportPanel"></view>
+<view class="export-panel" wx:if="{{showExport}}">
+  <view class="export-header">
+    <text class="export-title">导出施工日志</text>
+    <text class="export-close" bindtap="hideExportPanel">✕</text>
+  </view>
+  
+  <view class="export-body">
+    <!-- 日期范围选择 -->
+    <view class="export-section">
+      <text class="export-label">开始日期</text>
+      <picker mode="date" value="{{exportStartDate}}" bindchange="onExportStartDateChange">
+        <view class="export-picker">{{exportStartDate || '选择开始日期'}}</view>
+      </picker>
+    </view>
+    
+    <view class="export-section">
+      <text class="export-label">结束日期</text>
+      <picker mode="date" value="{{exportEndDate}}" bindchange="onExportEndDateChange">
+        <view class="export-picker">{{exportEndDate || '选择结束日期'}}</view>
+      </picker>
+    </view>
+    
+    <!-- 格式选择 -->
+    <view class="export-section">
+      <text class="export-label">导出格式</text>
+      <view class="export-format">
+        <view 
+          class="format-option {{exportFormat === 'excel' ? 'format-active' : ''}}"
+          bindtap="selectExportFormat"
+          data-format="excel"
+        >
+          <text class="format-icon">📊</text>
+          <text class="format-name">Excel</text>
+        </view>
+        <view 
+          class="format-option {{exportFormat === 'pdf' ? 'format-active' : ''}}"
+          bindtap="selectExportFormat"
+          data-format="pdf"
+        >
+          <text class="format-icon">📄</text>
+          <text class="format-name">PDF</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <view class="export-footer">
+    <button class="btn-secondary" bindtap="hideExportPanel">取消</button>
+    <button class="btn-primary" bindtap="doExport" loading="{{exporting}}">导出</button>
+  </view>
 </view>
