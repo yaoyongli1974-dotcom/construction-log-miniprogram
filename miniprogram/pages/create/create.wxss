@@ -66,10 +66,44 @@
   border: 2rpx solid var(--primary-color, #07C160);
   border-radius: 8rpx;
   flex-shrink: 0;
+  margin-left: 12rpx;
 }
 
 .history-btn:active {
   background: rgba(7, 193, 96, 0.1);
+}
+
+/* label 右侧按钮组 */
+.label-btns {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+/* 语音输入按钮 */
+.voice-btn {
+  font-size: 24rpx;
+  color: #FF6B35;
+  padding: 8rpx 16rpx;
+  border: 2rpx solid #FF6B35;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+
+.voice-btn:active {
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.voice-btn.recording {
+  background: #FF6B35;
+  color: #FFFFFF;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 /* 内联表单项（label 和输入框在同一行） */

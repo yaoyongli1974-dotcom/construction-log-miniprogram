@@ -65,14 +65,26 @@
     <view class="form-item">
       <view class="label-row">
         <text class="label required">施工内容</text>
-        <text class="history-btn" bindtap="showHistory" data-field="constructionContent">📋 历史</text>
+        <view class="label-btns">
+          <text 
+            class="voice-btn {{isVoiceRecording && voiceField === 'constructionContent' ? 'voice-btn-recording' : ''}}"
+            bindtap="startVoiceInput" 
+            data-field="constructionContent"
+          >{{isVoiceRecording && voiceField === 'constructionContent' ? '⏹ 停止' : '🎤 语音'}}</text>
+          <text class="history-btn" bindtap="showHistory" data-field="constructionContent">📋 历史</text>
+        </view>
       </view>
       <textarea 
         class="input-wrap textarea textarea-large"
+        id="textarea-constructionContent"
         style="height: 400rpx;"
         placeholder="请输入今日施工内容"
         value="{{log.content.constructionContent}}"
         bindinput="onConstructionContentInput"
+        bindfocus="onTextareaFocus"
+        bindblur="onTextareaBlur"
+        bindselectionchange="onSelectionChange"
+        data-field="constructionContent"
         maxlength="500"
       />
     </view>
@@ -144,14 +156,26 @@
     <view class="form-item">
       <view class="label-row">
         <text class="label">质量检查</text>
-        <text class="history-btn" bindtap="showHistory" data-field="qualityCheck">📋 历史</text>
+        <view class="label-btns">
+          <text 
+            class="voice-btn {{isVoiceRecording && voiceField === 'qualityCheck' ? 'voice-btn-recording' : ''}}"
+            bindtap="startVoiceInput" 
+            data-field="qualityCheck"
+          >{{isVoiceRecording && voiceField === 'qualityCheck' ? '⏹ 停止' : '🎤 语音'}}</text>
+          <text class="history-btn" bindtap="showHistory" data-field="qualityCheck">📋 历史</text>
+        </view>
       </view>
       <textarea 
         class="input-wrap textarea textarea-tall"
+        id="textarea-qualityCheck"
         style="height: 280rpx;"
         placeholder="请输入质量检查情况"
         value="{{log.content.qualityCheck}}"
         bindinput="onQualityCheckInput"
+        bindfocus="onTextareaFocus"
+        bindblur="onTextareaBlur"
+        bindselectionchange="onSelectionChange"
+        data-field="qualityCheck"
         maxlength="300"
       />
     </view>
@@ -159,14 +183,26 @@
     <view class="form-item">
       <view class="label-row">
         <text class="label">安全检查</text>
-        <text class="history-btn" bindtap="showHistory" data-field="safetyCheck">📋 历史</text>
+        <view class="label-btns">
+          <text 
+            class="voice-btn {{isVoiceRecording && voiceField === 'safetyCheck' ? 'voice-btn-recording' : ''}}"
+            bindtap="startVoiceInput" 
+            data-field="safetyCheck"
+          >{{isVoiceRecording && voiceField === 'safetyCheck' ? '⏹ 停止' : '🎤 语音'}}</text>
+          <text class="history-btn" bindtap="showHistory" data-field="safetyCheck">📋 历史</text>
+        </view>
       </view>
       <textarea 
         class="input-wrap textarea textarea-tall"
+        id="textarea-safetyCheck"
         style="height: 280rpx;"
         placeholder="请输入安全检查情况"
         value="{{log.content.safetyCheck}}"
         bindinput="onSafetyCheckInput"
+        bindfocus="onTextareaFocus"
+        bindblur="onTextareaBlur"
+        bindselectionchange="onSelectionChange"
+        data-field="safetyCheck"
         maxlength="300"
       />
     </view>
@@ -177,14 +213,26 @@
     <view class="form-item">
       <view class="label-row">
         <text class="label">存在问题</text>
-        <text class="history-btn" bindtap="showHistory" data-field="issues">📋 历史</text>
+        <view class="label-btns">
+          <text 
+            class="voice-btn {{isVoiceRecording && voiceField === 'issues' ? 'voice-btn-recording' : ''}}"
+            bindtap="startVoiceInput" 
+            data-field="issues"
+          >{{isVoiceRecording && voiceField === 'issues' ? '⏹ 停止' : '🎤 语音'}}</text>
+          <text class="history-btn" bindtap="showHistory" data-field="issues">📋 历史</text>
+        </view>
       </view>
       <textarea 
         class="input-wrap textarea textarea-tall"
+        id="textarea-issues"
         style="height: 280rpx;"
         placeholder="请输入存在问题"
         value="{{log.content.issues}}"
         bindinput="onIssuesInput"
+        bindfocus="onTextareaFocus"
+        bindblur="onTextareaBlur"
+        bindselectionchange="onSelectionChange"
+        data-field="issues"
         maxlength="300"
       />
     </view>
@@ -192,14 +240,26 @@
     <view class="form-item">
       <view class="label-row">
         <text class="label">明日计划</text>
-        <text class="history-btn" bindtap="showHistory" data-field="nextPlan">📋 历史</text>
+        <view class="label-btns">
+          <text 
+            class="voice-btn {{isVoiceRecording && voiceField === 'nextPlan' ? 'voice-btn-recording' : ''}}"
+            bindtap="startVoiceInput" 
+            data-field="nextPlan"
+          >{{isVoiceRecording && voiceField === 'nextPlan' ? '⏹ 停止' : '🎤 语音'}}</text>
+          <text class="history-btn" bindtap="showHistory" data-field="nextPlan">📋 历史</text>
+        </view>
       </view>
       <textarea 
         class="input-wrap textarea textarea-tall"
+        id="textarea-nextPlan"
         style="height: 280rpx;"
         placeholder="请输入明日计划"
         value="{{log.content.nextPlan}}"
         bindinput="onNextPlanInput"
+        bindfocus="onTextareaFocus"
+        bindblur="onTextareaBlur"
+        bindselectionchange="onSelectionChange"
+        data-field="nextPlan"
         maxlength="300"
       />
     </view>

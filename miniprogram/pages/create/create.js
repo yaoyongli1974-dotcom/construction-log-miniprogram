@@ -35,6 +35,9 @@ Page({
     weatherIndex: 0,
     // 天气下拉菜单
     showWeatherDropdown: false,
+    // 语音输入
+    voiceField: '',
+    isVoiceRecording: false,
     // 历史记录相关
     showHistory: false,
     historyList: [],
@@ -53,6 +56,27 @@ Page({
     } else {
       this.initPage();
     }
+    
+    // 初始化录音管理器
+    this.recorderManager = wx.getRecorderManager();
+    
+    // 初始化光标位置跟踪（实例变量，实时更新）
+    this._cursorPositions = {};
+    
+    this.recorderManager.onStop((res) => {
+      console.log('[语音] 录音结束', res);
+      this.setData({ isVoiceRecording: false });
+      
+      // 上传录音文件到云存储，然后调用识别
+      this.uploadAndRecognize(res.tempFilePath);
+    });
+    
+    // 录音错误事件
+    this.recorderManager.onError((err) => {
+      console.error('[语音] 录音失败', err);
+      this.setData({ isVoiceRecording: false });
+      wx.showToast({ title: '录音失败', icon: 'none' });
+    });
   },
 
   onShow() {
@@ -238,6 +262,10 @@ Page({
     this.setData({
       'log.content.constructionContent': e.detail.value
     });
+    // 跟踪光标位置（bindinput 事件返回 e.detail.cursor）
+    if (e.detail.cursor !== undefined) {
+      this._cursorPositions['constructionContent'] = e.detail.cursor;
+    }
   },
 
   // 施工人数输入
@@ -323,6 +351,9 @@ Page({
     this.setData({
       'log.content.qualityCheck': e.detail.value
     });
+    if (e.detail.cursor !== undefined) {
+      this._cursorPositions['qualityCheck'] = e.detail.cursor;
+    }
   },
 
   // 安全检查输入
@@ -330,6 +361,9 @@ Page({
     this.setData({
       'log.content.safetyCheck': e.detail.value
     });
+    if (e.detail.cursor !== undefined) {
+      this._cursorPositions['safetyCheck'] = e.detail.cursor;
+    }
   },
 
   // 存在问题输入
@@ -337,6 +371,9 @@ Page({
     this.setData({
       'log.content.issues': e.detail.value
     });
+    if (e.detail.cursor !== undefined) {
+      this._cursorPositions['issues'] = e.detail.cursor;
+    }
   },
 
   // 明日计划输入
@@ -344,6 +381,9 @@ Page({
     this.setData({
       'log.content.nextPlan': e.detail.value
     });
+    if (e.detail.cursor !== undefined) {
+      this._cursorPositions['nextPlan'] = e.detail.cursor;
+    }
   },
   
   // 点击"历史"按钮，显示历史记录
@@ -662,6 +702,151 @@ Page({
     }
   },
 
+  // ===== 语音输入相关方法 =====
+  
+  // 上传录音文件并调用云函数识别
+  async uploadAndRecognize(tempFilePath) {
+    try {
+      wx.showLoading({ title: '识别中...' });
+      
+      // 1. 上传录音文件到云存储
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath: `voice/${Date.now()}.wav`,
+        filePath: tempFilePath
+      });
+      
+      console.log('[语音] 上传成功, fileID:', uploadRes.fileID);
+      
+      // 2. 调用云函数识别
+      console.log('[语音] 开始调用 voiceToText 云函数...');
+      const recognizeRes = await wx.cloud.callFunction({
+        name: 'voiceToText',
+        data: { fileID: uploadRes.fileID },
+        timeout: 30000  // 30秒超时（语音识别需要时间）
+      });
+      
+      console.log('[语音] 云函数返回:', JSON.stringify(recognizeRes));
+      console.log('[语音] 云函数result:', JSON.stringify(recognizeRes.result));
+      
+      wx.hideLoading();
+      
+      if (recognizeRes.result && recognizeRes.result.success) {
+        const text = recognizeRes.result.text;
+        this.insertVoiceText(text);
+      } else {
+        throw new Error(recognizeRes.result.message || '识别失败');
+      }
+    } catch (err) {
+      console.error('[语音] 识别失败', err);
+      wx.hideLoading();
+      wx.showToast({ 
+        title: '识别失败：' + (err.message || '未知错误'), 
+        icon: 'none',
+        duration: 2000
+      });
+      this.setData({ isVoiceRecording: false, voiceField: '' });
+    }
+  },
+  
+  // 跟踪光标位置（textarea选择变化事件）
+  onSelectionChange(e) {
+    const field = e.currentTarget.dataset.field;
+    const cursorPos = e.detail.selectionStart;
+    if (field && cursorPos !== undefined) {
+      this._cursorPositions[field] = cursorPos;
+    }
+  },
+
+  // textarea 失焦时记录光标位置（最可靠：失焦一定在 tap 前发生）
+  onTextareaBlur(e) {
+    const field = e.currentTarget.dataset.field;
+    if (field && e.detail.cursor !== undefined) {
+      this._cursorPositions[field] = e.detail.cursor;
+      console.log('[光标] blur 记录', field, 'pos=', e.detail.cursor);
+    }
+  },
+
+  // textarea 聚焦时也记录
+  onTextareaFocus(e) {
+    const field = e.currentTarget.dataset.field;
+    if (field && e.detail.cursor !== undefined) {
+      this._cursorPositions[field] = e.detail.cursor;
+    }
+  },
+  startVoiceInput(e) {
+    const field = e.currentTarget.dataset.field;
+    
+    if (this.data.isVoiceRecording) {
+      this.recorderManager.stop();
+      this.setData({ isVoiceRecording: false });
+    } else {
+      // 直接开始录音（光标位置已在 catchtouchstart 时冻结）
+      this.setData({
+        isVoiceRecording: true,
+        voiceField: field
+      });
+      
+      this.recorderManager.start({
+        duration: 60000,
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        format: 'wav'
+      });
+      
+      wx.showToast({ title: '正在录音...', icon: 'none', duration: 1000 });
+    }
+  },
+  
+  
+  // 把识别的文字插入到对应输入框的光标位置
+  insertVoiceText(text) {
+    const field = this.data.voiceField;
+    if (!field || !text) return;
+    
+    // 优先用 onTextareaBlur 捕获的光标位置（最可靠）
+    // 其次用 onSelectionChange 实时跟踪的位置
+    // 都没有则追加到末尾
+    const currentValue = this.data.log.content[field] || '';
+    let cursorPos = this._cursorPositions[field];
+    if (cursorPos === undefined || cursorPos < 0 || cursorPos > currentValue.length) {
+      cursorPos = currentValue.length; // 追加到末尾
+    }
+    
+    let newValue;
+    let newCursorPos;
+    
+    // 在光标位置插入
+    const before = currentValue.substring(0, cursorPos);
+    const after = currentValue.substring(cursorPos);
+    newValue = before + text + after;
+    newCursorPos = cursorPos + text.length;
+    
+    // 更新跟踪的光标位置
+    this._cursorPositions[field] = newCursorPos;
+    
+    this.setData({
+      [`log.content.${field}`]: newValue,
+      voiceField: '',
+      isVoiceRecording: false
+    }, () => {
+      // setData 回调：聚焦文本框并把光标设到插入位置
+      wx.nextTick(() => {
+        const query = wx.createSelectorQuery().in(this);
+        query.select('#textarea-' + field).context((res) => {
+          if (res.context && res.context.focus) {
+            res.context.focus();
+            if (typeof res.context.setTextareaSelection === 'function') {
+              res.context.setTextareaSelection(newCursorPos, newCursorPos);
+            }
+          }
+        }).exec();
+      });
+    });
+    
+    wx.showToast({ title: '语音识别成功', icon: 'success' });
+  },
+  
+  // ===== 分享 =====
   // 分享
   onShareAppMessage() {
     return {
