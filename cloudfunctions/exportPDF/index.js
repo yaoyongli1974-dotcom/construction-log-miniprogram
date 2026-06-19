@@ -65,16 +65,12 @@ function generateLogPageHTML(log) {
   <!-- 标题 -->
   <h1>施 工 日 志</h1>
 
-  <!-- 项目名称行 -->
-  <div class="header-row project-row">
-    <span class="header-label">项目名称：</span>
-    <span class="project-name">${esc(log.projectName)}</span>
-  </div>
-
-  <!-- 编号行（靠右） -->
-  <div class="header-row number-row">
-    <span class="header-label">编　号：</span>
-    <span class="header-line"></span>
+    <!-- 项目名称 + 编号行（同一行） -->
+  <div class="header-row">
+    <span class="project-name">项目名称：${esc(log.projectName)}</span>
+    <span class="header-spacer"></span>
+    <span class="header-number">编　号：</span>
+    <span class="header-numline"></span>
     <span class="form-type">表 A5</span>
   </div>
 
@@ -196,37 +192,35 @@ h1 {
 
 /* ===== 项目名称行 ===== */
 .project-row {
-  padding: 2px 0 6px;
-  font-size: 13px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 2px 0 8px 0;
+  font-size: 12.5px;
 }
 .project-name {
   font-weight: bold;
-  margin-left: 4px;
+  white-space: nowrap;
+  margin-right: 12px;
 }
-
-/* ===== 编号行（靠右） ===== */
-.number-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 8px;
-  font-size: 12.5px;
-}
-.number-row .header-label { flex-shrink: 0; }
-.number-row .header-line {
+.header-spacer {
   flex-grow: 1;
-  border-bottom: 1px solid #000;
-  min-width: 60px;
-  margin: 0 12px;
 }
-.number-row .form-type { flex-shrink: 0; font-weight: bold; }
-
-/* ===== 表格 ===== */
-.main-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1.5px solid #000;
-  table-layout: fixed;
+.header-number {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+.header-numline {
+  display: inline-block;
+  min-width: 80px;
+  border-bottom: 1px solid #000;
+  margin-right: 10px;
+}
+.form-type {
+  flex-shrink: 0;
+  font-weight: bold;
+  white-space: nowrap;
 }
 .main-table td {
   border: 1px solid #000;
