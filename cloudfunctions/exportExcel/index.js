@@ -1,5 +1,5 @@
 const cloud = require('wx-server-sdk');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
@@ -7,230 +7,180 @@ const db = cloud.database();
 const _ = db.command;
 
 /**
- * 生成单条日志的标准施工日志 Excel 表格
- * 使用合并单元格模拟国家标准施工日志模板（表 A5）
+ * 将 Excel 日期序列号转为 "YYYY-MM-DD" 字符串
  */
-function createLogSheet(wb, log) {
-  const content = log.content || {};
-  
-  // 生产情况记录文本
-  let production = content.constructionContent || '';
-  if (content.personnelCount) {
-    production += (production ? '\n' : '') + `投入施工人员 ${content.personnelCount} 人`;
-  }
-  if (content.machineryList && content.machineryList.length > 0) {
-    const mStr = content.machineryList.map(m => `${m.type} ${m.count}台`).join('；');
-    production += (production ? '\n' : '') + mStr;
-  }
-  if (content.progressPercent !== undefined && content.progressPercent !== null) {
-    production += (production ? '\n' : '') + `当日进度 ${content.progressPercent}%`;
-  }
-  
-  // 技术质量安全工作记录文本
-  let qa = '';
-  if (content.qualityCheck) qa += content.qualityCheck;
-  if (content.safetyCheck) qa += (qa ? '\n' : '') + content.safetyCheck;
-  if (content.issues) qa += (qa ? '\n' : '') + '存在问题：' + content.issues;
-  if (content.nextPlan) qa += (qa ? '\n' : '') + '明日计划：' + content.nextPlan;
-
-  // 定义表格数据（8行 x 6列）
-  const sheetData = [
-    // 第1行：标题行（合并居中）
-    ['施 工 日 志', '', '', '', '', ''],
-    // 第2行：项目名称 + 编号（同一行，编号靠右）
-    [{ v: '项目名称：' + (log.projectName || ''), s: { font: { bold: true } } }, '', '', '', '编　号：', '表 A5'],
-    // 第3行：日期 | 值 | 施工部位 | 值
-    ['日　期', log.date || '', '施工部位', log.projectName || '', '', ''],
-    // 第4行：天气 | 值 | 风力 | 空 | 最高最低温度 | 空
-    ['天气情况', log.weather || '', '风　力', '', '最高/最低温度', ''],
-    // 第5行：突发事件（跨列）
-    ['突发事件', '无', '', '', '', ''],
-    // 第6-7行：生产情况记录（大区域，标题+内容分两行）
-    [
-      { v: '生产情况记录：（施工项目内容、机械作业、班组生产、生产存在问题等）', s: { font: { bold: false, sz: 10 } } },
-      '', '', '', '', ''
-    ],
-    [
-      { v: production || '(无)', s: { alignment: { wrapText: true, vertical: 'top' }, font: { sz: 11 } } },
-      '', '', '', '', ''
-    ],
-    // 第8-9行：技术质量安全工作记录（大区域）
-    [
-      { v: '技术质量安全工作记录：（技术质量安全活动、问题、检查验收情况等）', s: { font: { bold: false, sz: 10 } } },
-      '', '', '', '', ''
-    ],
-    [
-      { v: qa || '(无)', s: { alignment: { wrapText: true, vertical: 'top' }, font: { sz: 11 } } },
-      '', '', '', '', ''
-    ],
-    // 第10行：签名行（2列：建造师 + 记录人）
-    [
-      { v: '建造师（项目经理）', s: { alignment: { horizontal: 'center' } } },
-      '',
-      { v: '记　录　人', s: { alignment: { horizontal: 'center' } } },
-      '', '', ''
-    ],
-    // 第11行：底部说明
-    [{ 
-      v: '本表由施工单位填写，建设单位、城建档案馆和施工单位各保存一份。', 
-      s: { font: { sz: 9, color: { rgb: '666666' } } }
-    }, '', '', '', '', '']
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-  
-  // ===== 合并单元格 =====
-  ws['!merges'] = [
-    // 标题行合并
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-    // 第1行：项目名称占 A-C，编号横线占 D-E
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
-    { s: { r: 1, c: 3 }, e: { r: 1, c: 4 } },
-    // 日期行
-    { s: { r: 2, c: 1 }, e: { r: 2, c: 2 } },
-    { s: { r: 2, c: 3 }, e: { r: 2, c: 5 } },
-    // 天气行
-    { s: { r: 3, c: 1 }, e: { r: 3, c: 2 } },
-    { s: { r: 3, c: 4 }, e: { r: 3, c: 5 } },
-    // 突发事件
-    { s: { r: 4, c: 1 }, e: { r: 4, c: 5 } },
-    // 生产情况记录标题
-    { s: { r: 5, c: 0 }, e: { r: 5, c: 5 } },
-    // 生产情况记录内容
-    { s: { r: 6, c: 0 }, e: { r: 6, c: 5 } },
-    // 质量安全标题
-    { s: { r: 7, c: 0 }, e: { r: 7, c: 5 } },
-    // 质量安全内容
-    { s: { r: 8, c: 0 }, e: { r: 8, c: 5 } },
-    // 签名行（2列：建造师占 A-C，记录人占 D-F）
-    { s: { r: 9, c: 0 }, e: { r: 9, c: 2 } },
-    { s: { r: 9, c: 3 }, e: { r: 9, c: 5 } },
-    // 底部说明
-    { s: { r: 10, c: 0 }, e: { r: 10, c: 5 } }
-  ];
-  
-  // ===== 列宽 =====
-  ws['!cols'] = [
-    { wch: 14 },   // A: 标签列
-    { wch: 16 },   // B: 值列
-    { wch: 12 },   // C: 标签列2
-    { wch: 20 },   // D: 值列2
-    { wch: 14 },   // E: 标签列3
-    { wch: 10 },   // F: 值列3
-  ];
-  
-  // ===== 行高 =====
-  ws['!rows'] = [
-    { hpt: 36 },     // 行0: 标题（大字）
-    { hpt: 18 },     // 行1: 编号
-    { hpt: 22 },     // 行2: 日期/部位
-    { hpt: 22 },     // 行3: 天气/风力
-    { hpt: 20 },     // 行4: 突发事件
-    { hpt: 18 },     // 行5: 生产情况标题
-    { hpt: 120 },    // 行6: 生产情况内容（高行）
-    { hpt: 18 },     // 行7: 质量安全标题
-    { hpt: 100 },    // 行8: 质量安全内容（高行）
-    { hpt: 24 },     // 行9: 签名行
-    { hpt: 18 }      // 行10: 说明
-  ];
-  
-  // ===== 全局单元格样式 =====
-  applyCellStyles(ws);
-
-  // 标题特殊样式
-  const titleCell = ws['A1'];
-  if (titleCell) {
-    titleCell.s = {
-      font: { name: 'SimHei', bold: true, sz: 20, color: { rgb: '000000' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      fill: { fgColor: { rgb: 'FFFFFF' } }
-    };
-  }
-
-  // 添加到工作簿
-  const sheetName = log.date || '日志';
-  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31)); // Excel sheet名最长31字符
-  
-  return ws;
+function excelDateToString(serial) {
+  if (typeof serial !== 'number') return serial || '';
+  const utc_days = Math.floor(serial - 25569);
+  const date = new Date(utc_days * 86400 * 1000);
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
-// 应用通用单元格样式（边框 + 对齐）
-function applyCellStyles(ws) {
-  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-  
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      if (!ws[addr]) continue;
-      if (!ws[addr].s) ws[addr].s = {};
-      
-      // 边框
-      ws[addr].s.border = {
-        top: { style: 'thin', color: { rgb: '000000' } },
-        bottom: { style: 'thin', color: { rgb: '000000' } },
-        left: { style: 'thin', color: { rgb: '000000' } },
-        right: { style: 'thin', color: { rgb: '000000' } }
-      };
-      
-      // 默认垂直居中
-      if (!ws[addr].s.alignment) {
-        ws[addr].s.alignment = { vertical: 'center', wrapText: false };
-      }
-    }
-  }
-}
-
+/**
+ * 主入口：读取 template.xlsx，填充日志数据
+ */
 exports.main = async (event, context) => {
   const { startDate, endDate } = event;
-  
-  console.log('[exportExcel] 开始导出模板格式', startDate, endDate);
-  
-  try {
-    // 查询日志
-    const query = {
-      date: _.gte(startDate).lte(endDate)
-    };
-    
-    const res = await db.collection('logs')
-      .where(query)
-      .orderBy('date', 'asc')
-      .get();
-    
-    const logs = res.data;
-    console.log('[exportExcel] 查询到', logs.length, '条日志');
-    
-    if (logs.length === 0) {
-      return { success: false, message: '所选日期范围内没有日志' };
-    }
-    
-    // 创建工作簿
-    const wb = XLSX.utils.book_new();
-    
-    // 每条日志生成一个 Sheet（标准施工日志表格）
-    logs.forEach(log => {
-      createLogSheet(wb, log);
-    });
-    
-    // 写入 buffer
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    
-    // 上传云存储
-    const fileName = `export/excel/${startDate}_${endDate}.xlsx`;
-    const fileRes = await cloud.uploadFile({
-      cloudPath: fileName,
-      fileContent: buffer
-    });
-    
-    console.log('[exportExcel] 文件已上传', fileRes.fileID);
-    
-    return {
-      success: true,
-      fileID: fileRes.fileID,
-      count: logs.length,
-      format: 'template'
-    };
-  } catch (err) {
-    console.error('[exportExcel] 失败', err);
-    return { success: false, message: err.message };
+
+  // 1. 查询日志数据
+  let query = db.collection('logs');
+  if (startDate) query = query.where({ date: _.gte(startDate) });
+  if (endDate) query = query.where({ date: _.lte(endDate) });
+  const res = await query.orderBy('date', 'desc').limit(100).get();
+  const logs = res.data || [];
+
+  if (logs.length === 0) {
+    return { success: false, message: '所选日期范围内没有日志' };
   }
+
+  // 2. 读取模板文件
+  const path = require('path');
+  const templatePath = path.join(__dirname, 'template.xlsx');
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(templatePath);
+
+  // 3. 为每条日志填充一个 Sheet
+  for (let i = 0; i < logs.length; i++) {
+    const log = logs[i];
+    const content = log.content || {};
+
+    let ws;
+    if (i === 0) {
+      ws = workbook.getWorksheet(1);
+      ws.name = logs.length === 1 ? '施工日志' : `第${i + 1}条`;
+    } else {
+      // 复制模板 Sheet（通过克隆第一行和样式）
+      const templateWs = workbook.getWorksheet(1);
+      ws = workbook.addWorksheet(`第${i + 1}条`);
+      copySheet(templateWs, ws);
+    }
+
+    // ===== 填充数据 =====
+    // 行2：项目名称（A列）
+    if (ws.getCell('A2').value && ws.getCell('A2').value.toString().includes('项目名称')) {
+      ws.getCell('A2').value = '项目名称：' + (log.projectName || '');
+    }
+
+    // 行3：日期（B列）、施工部位（D列）
+    const dateStr = excelDateToString(log.date) || log.date || '';
+    safeSetCell(ws, 3, 2, dateStr);  // B3
+    safeSetCell(ws, 3, 4, log.projectName || '');  // D3
+
+    // 行4：天气（B列）
+    safeSetCell(ws, 4, 2, log.weather || '');  // B4
+
+    // 行6-7：生产情况记录
+    let production = content.constructionContent || '';
+    if (content.personnelCount) production += (production ? '\n' : '') + `投入施工人员 ${content.personnelCount} 人`;
+    if (content.machineryList && content.machineryList.length > 0) {
+      production += (production ? '\n' : '') + content.machineryList.map(m => `${m.type} ${m.count}台`).join('；');
+    }
+    if (content.progressPercent !== undefined && content.progressPercent !== null) {
+      production += (production ? '\n' : '') + `当日进度 ${content.progressPercent}%`;
+    }
+    safeSetCell(ws, 7, 1, production || '（无）');  // A7（生产情况内容行）
+
+    // 行8-9：技术质量安全工作记录
+    let qa = '';
+    if (content.qualityCheck) qa += content.qualityCheck;
+    if (content.safetyCheck) qa += (qa ? '\n' : '') + content.safetyCheck;
+    if (content.issues) qa += (qa ? '\n' : '') + '存在问题：' + content.issues;
+    if (content.nextPlan) qa += (qa ? '\n' : '') + '明日计划：' + content.nextPlan;
+    safeSetCell(ws, 9, 1, qa || '（无）');  // A9（质量安全内容行）
+  }
+
+  // 4. 写入缓冲区并上传云存储
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  const uploadRes = await cloud.uploadFile({
+    cloudPath: `exports/excel/施工日志_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    fileContent: Buffer.from(buffer)
+  });
+
+  return {
+    success: true,
+    fileID: uploadRes.fileID,
+    count: logs.length
+  };
 };
+
+/**
+ * 安全设置单元格值（处理合并单元格等情况）
+ */
+function safeSetCell(ws, row, col, value) {
+  try {
+    const cell = ws.getCell(row, col);
+    cell.value = value;
+  } catch (e) {
+    // 如果设置失败（比如合并单元格），尝试用地址设置
+    const colLetter = getColLetter(col);
+    try {
+      ws.getCell(`${colLetter}${row}`).value = value;
+    } catch (e2) {
+      console.warn(`无法设置单元格 ${colLetter}${row}:`, e2.message);
+    }
+  }
+}
+
+/**
+ * 列号转字母（1 -> A, 2 -> B, ...）
+ */
+function getColLetter(col) {
+  let letter = '';
+  while (col > 0) {
+    col--;
+    letter = String.fromCharCode(65 + (col % 26)) + letter;
+    col = Math.floor(col / 26);
+  }
+  return letter;
+}
+
+/**
+ * 复制 Sheet（保留样式、合并单元格、列宽、行高）
+ */
+function copySheet(src, dst) {
+  // 复制列宽
+  if (src.columns) {
+    dst.columns = src.columns.map(col => ({
+      width: col.width,
+      hidden: col.hidden
+    }));
+  }
+
+  // 复制每一行
+  src.eachRow((row, rowNum) => {
+    const dstRow = dst.getRow(rowNum);
+    dstRow.height = row.height;
+    dstRow.hidden = row.hidden;
+
+    row.eachCell({ includeEmpty: false }, (cell, colNum) => {
+      const dstCell = dstRow.getCell(colNum);
+      dstCell.value = cell.value;
+      // 复制样式
+      if (cell.style) {
+        dstCell.style = { ...cell.style };
+      }
+      // 复制对齐方式
+      if (cell.alignment) {
+        dstCell.alignment = { ...cell.alignment };
+      }
+    });
+  });
+
+  // 复制合并单元格
+  if (src._merges && Array.isArray(src._merges)) {
+    src._merges.forEach(m => {
+      dst.mergeCells(m.top, m.left, m.bottom, m.right);
+    });
+  }
+
+  // 页面设置（A4 打印）
+  dst.pageSetup = {
+    paperSize: 9,  // A4
+    orientation: 'portrait',
+    margins: { left: 12, right: 12, top: 12, bottom: 12 }
+  };
+}
