@@ -326,6 +326,13 @@
   background: #FFFFFF;
   width: 100%;
   box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+/* 输入框焦点状态 */
+.input-wrap-focus {
+  border-color: var(--primary-color, #07C160);
+  box-shadow: 0 0 0 4rpx rgba(7, 193, 96, 0.1);
 }
 
 /* 多行输入框统一高度 */

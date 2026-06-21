@@ -300,3 +300,24 @@
   margin: 0;
   font-size: 28rpx;
 }
+
+/* 没有更多数据 */
+.no-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 20rpx;
+  gap: 20rpx;
+}
+
+.no-more-line {
+  flex: 1;
+  height: 2rpx;
+  background: var(--border-color);
+  max-width: 120rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}

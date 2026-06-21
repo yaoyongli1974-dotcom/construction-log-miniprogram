@@ -70,11 +70,16 @@ Page({
   async deleteLog() {
     wx.showModal({
       title: '确认删除',
-      content: '确定要删除这条日志吗？删除后不可恢复。',
+      content: '确定要删除这条日志吗？\n\n删除后不可恢复，请谨慎操作。',
+      confirmText: '删除',
+      confirmColor: '#FA5151',
       success: async (res) => {
         if (res.confirm) {
           try {
-            wx.showLoading({ title: '删除中...' });
+            // 振动反馈
+            wx.vibrateShort({ type: 'heavy' });
+            
+            wx.showLoading({ title: '正在删除...' });
             
             console.log('[删除] 准备调用deleteLog云函数，logId:', this.data.logId);
             
@@ -89,36 +94,56 @@ Page({
             wx.hideLoading();
             
             if (result.result && result.result.success) {
+              // 成功反馈：振动 + 提示
+              wx.vibrateShort({ type: 'medium' });
+              
               wx.showToast({
                 title: '删除成功',
-                icon: 'success'
+                icon: 'success',
+                duration: 1500
               });
               
               // 设置刷新标记（使用 globalData，index.js 的 onShow 会检查）
               app.globalData.needRefresh = true;
               
-              // 同时设置上一页的 data（兜底，兼容两种检查方式）
-              const pages = getCurrentPages();
-              if (pages.length > 1) {
-                const prevPage = pages[pages.length - 2];
-                prevPage.setData({ needRefresh: true });
-              }
-              
-              wx.navigateBack();
+              // 延迟返回，让用户看到成功提示
+              setTimeout(() => {
+                wx.navigateBack();
+              }, 1500);
             } else {
-              wx.showToast({
-                title: result.result?.message || '删除失败',
-                icon: 'none'
+              // 删除失败
+              wx.vibrateShort({ type: 'heavy' });
+              
+              wx.showModal({
+                title: '删除失败',
+                content: result.result?.message || '未知错误，请重试',
+                showCancel: false,
+                confirmText: '我知道了'
               });
             }
           } catch (err) {
             console.error('删除日志失败', err);
             console.error('[删除] 错误详情:', JSON.stringify(err));
             wx.hideLoading();
-            wx.showToast({
-              title: '删除失败：' + (err.errMsg || err.message || '未知错误'),
-              icon: 'none',
-              duration: 3000
+            
+            // 振动反馈
+            wx.vibrateShort({ type: 'heavy' });
+            
+            // 提供更详细的错误信息
+            let errorMsg = '删除失败，请重试';
+            if (err.errMsg && err.errMsg.includes('timeout')) {
+              errorMsg = '请求超时，请检查网络连接后重试';
+            } else if (err.errMsg && err.errMsg.includes('fail')) {
+              errorMsg = '网络请求失败，请检查网络设置';
+            } else if (err.message) {
+              errorMsg = err.message;
+            }
+            
+            wx.showModal({
+              title: '删除失败',
+              content: errorMsg,
+              showCancel: false,
+              confirmText: '我知道了'
             });
           }
         }

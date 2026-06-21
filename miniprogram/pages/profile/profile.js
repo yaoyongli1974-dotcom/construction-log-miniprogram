@@ -3,7 +3,8 @@ const app = getApp();
 
 Page({
   data: {
-    userInfo: null,
+    userInfo: null,   // 用户资料（从云数据库加载）
+    openid: '',        // 用户 openid
     stats: {
       totalLogs: 0,
       thisMonthLogs: 0,
@@ -18,15 +19,97 @@ Page({
   },
 
   onShow() {
-    // 每次显示时刷新数据
+    // 每次显示时刷新数据和用户资料
+    this.loadUserInfo();
     this.loadStats();
   },
 
-  // 加载用户信息
-  loadUserInfo() {
-    const userInfo = app.globalData.userInfo;
-    if (userInfo) {
-      this.setData({ userInfo: userInfo });
+  // 从云数据库加载用户资料（静默，不需要用户授权）
+  async loadUserInfo() {
+    const openid = app.globalData.openid;
+    if (!openid) {
+      // 云开发未就绪，等待 500ms 后重试
+      setTimeout(() => this.loadUserInfo(), 500);
+      return;
+    }
+
+    try {
+      const db = wx.cloud.database();
+      const res = await db.collection('users').doc(openid).get();
+      if (res.data) {
+        const userInfo = {
+          nickName: res.data.nickName || '微信用户',
+          avatarUrl: res.data.avatarUrl || ''
+        };
+        this.setData({
+          userInfo,
+          openid
+        });
+        // 同步到 globalData
+        app.globalData.userInfo = userInfo;
+      }
+    } catch (err) {
+      // 用户记录不存在，使用默认值
+      this.setData({
+        userInfo: { nickName: '微信用户', avatarUrl: '' },
+        openid
+      });
+    }
+  },
+
+  // 选择头像（微信新API：button open-type="chooseAvatar"）
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    if (!avatarUrl) return;
+
+    // 上传到云存储
+    const openid = app.globalData.openid;
+    const fileName = `avatar/${openid}_${Date.now()}.png`;
+    
+    wx.cloud.uploadFile({
+      cloudPath: fileName,
+      filePath: avatarUrl,
+      success: async (uploadRes) => {
+        const fileID = uploadRes.fileID;
+        // 更新云数据库
+        try {
+          const db = wx.cloud.database();
+          await db.collection('users').doc(openid).update({
+            data: { avatarUrl: fileID }
+          });
+          this.setData({
+            'userInfo.avatarUrl': fileID
+          });
+          app.globalData.userInfo.avatarUrl = fileID;
+          wx.showToast({ title: '头像已更新', icon: 'success' });
+        } catch (err) {
+          console.error('更新头像失败', err);
+        }
+      },
+      fail: (err) => {
+        console.error('上传头像失败', err);
+        wx.showToast({ title: '上传失败', icon: 'none' });
+      }
+    });
+  },
+
+  // 修改昵称（微信新API：input type="nickname"）
+  async onInputNickname(e) {
+    const nickName = e.detail.value.trim();
+    if (!nickName) return;
+
+    const openid = app.globalData.openid;
+    try {
+      const db = wx.cloud.database();
+      await db.collection('users').doc(openid).update({
+        data: { nickName }
+      });
+      this.setData({
+        'userInfo.nickName': nickName
+      });
+      app.globalData.userInfo.nickName = nickName;
+    } catch (err) {
+      console.error('更新昵称失败', err);
     }
   },
 
@@ -34,23 +117,21 @@ Page({
   async loadStats() {
     this.setData({ loading: true });
 
-    // 检查云开发是否就绪
-    if (!app.globalData.cloudReady || !app.globalData.openid) {
-      console.log('[提示] 云开发未配置，跳过统计数据加载');
-      this.setData({ loading: false });
+    const openid = app.globalData.openid;
+    if (!openid) {
+      setTimeout(() => this.loadStats(), 500);
       return;
     }
 
     try {
-      const openid = app.globalData.openid;
       const db = wx.cloud.database();
       const _ = db.command;
-      
+
       // 获取总日志数
       const totalResult = await db.collection('logs')
         .where({ userId: openid })
         .count();
-      
+
       // 获取本月日志数
       const now = new Date();
       const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
@@ -60,7 +141,7 @@ Page({
           date: _.gte(thisMonthStart)
         })
         .count();
-      
+
       // 获取草稿数
       const draftResult = await db.collection('logs')
         .where({
@@ -68,7 +149,7 @@ Page({
           status: 'draft'
         })
         .count();
-      
+
       this.setData({
         stats: {
           totalLogs: totalResult.total,
@@ -85,17 +166,12 @@ Page({
 
   // 查看全部日志
   viewAllLogs() {
-    wx.switchTab({
-      url: '/pages/index/index'
-    });
+    wx.switchTab({ url: '/pages/index/index' });
   },
 
   // 查看草稿
   viewDrafts() {
-    wx.switchTab({
-      url: '/pages/index/index'
-    });
-    // 实际应该跳转到带筛选的日志列表，这里简化为跳首页
+    wx.switchTab({ url: '/pages/index/index' });
   },
 
   // 分享小程序
@@ -109,10 +185,9 @@ Page({
 
   // 联系客服
   contactService() {
-    // 这里可以配置客服按钮或使用feedback组件
     wx.showModal({
       title: '联系我们',
-      content: '如有问题，请发送邮件至 support@construction-log.com',
+      content: '如有问题，请发送邮件至 admin@029cn.com',
       showCancel: false
     });
   },
@@ -125,10 +200,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           wx.clearStorageSync();
-          wx.showToast({
-            title: '缓存已清除',
-            icon: 'success'
-          });
+          wx.showToast({ title: '缓存已清除', icon: 'success' });
         }
       }
     });

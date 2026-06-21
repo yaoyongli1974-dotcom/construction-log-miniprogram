@@ -178,6 +178,7 @@
   justify-content: center;
   align-items: center;
   padding: 100rpx 40rpx;
+  min-height: 60vh;
 }
 
 .loading-text {
@@ -186,7 +187,25 @@
 }
 
 .error-text {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: var(--danger-color);
-  margin-bottom: 20rpx;
+  margin: 24rpx 0 12rpx;
+  font-weight: 500;
+}
+
+.error-hint {
+  font-size: 26rpx;
+  color: var(--text-hint);
+  margin-bottom: 32rpx;
+}
+
+.error-image {
+  width: 240rpx;
+  height: 240rpx;
+  margin-bottom: 24rpx;
+  opacity: 0.8;
+}
+
+.retry-btn {
+  min-width: 200rpx;
 }

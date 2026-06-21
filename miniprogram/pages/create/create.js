@@ -42,7 +42,9 @@ Page({
     showHistory: false,
     historyList: [],
     historyField: '',
-    historyFieldName: ''
+    historyFieldName: '',
+    // 当前获得焦点的输入框
+    focusField: ''
   },
 
   onLoad(options) {
@@ -62,6 +64,18 @@ Page({
     
     // 初始化光标位置跟踪（实例变量，实时更新）
     this._cursorPositions = {};
+    
+    // 监听键盘高度变化，调整页面滚动位置
+    this._keyboardHeight = 0;
+    wx.onKeyboardHeightChange((res) => {
+      this._keyboardHeight = res.height;
+      if (res.height > 0) {
+        // 键盘弹出时，延迟滚动到当前输入位置
+        setTimeout(() => {
+          this.scrollToCurrentInput();
+        }, 300);
+      }
+    });
     
     this.recorderManager.onStop((res) => {
       console.log('[语音] 录音结束', res);
@@ -315,7 +329,15 @@ Page({
   onProgressPercentInput(e) {
     let value = parseInt(e.detail.value) || 0;
     if (value < 0) value = 0;
-    if (value > 100) value = 100;
+    if (value > 100) {
+      value = 100;
+      // 实时反馈：进度不能超过100%
+      wx.showToast({
+        title: '进度不能超过100%',
+        icon: 'none',
+        duration: 1500
+      });
+    }
     this.setData({
       'log.content.progressPercent': value
     });
@@ -647,9 +669,17 @@ Page({
       this.setData({ saving: false });
       
       if (result.result && result.result.success) {
+        // 成功反馈：振动 + 友好的提示
+        wx.vibrateShort({ type: 'medium' });
+        
+        const successMsg = status === 'published' 
+          ? (isEdit ? '日志更新成功！' : '日志发布成功！') 
+          : '草稿保存成功！';
+        
         wx.showToast({
-          title: status === 'published' ? (isEdit ? '更新成功' : '发布成功') : '草稿保存成功',
-          icon: 'success'
+          title: successMsg,
+          icon: 'success',
+          duration: 1500
         });
         
         if (log.projectName) {
@@ -668,12 +698,15 @@ Page({
         app.globalData.needResetCreatePage = true;
         app.globalData.needRefresh = true;
         
-        const pages = getCurrentPages();
-        if (pages.length > 1) {
-          wx.navigateBack();
-        } else {
-          wx.switchTab({ url: '/pages/index/index' });
-        }
+        // 延迟返回，让用户看到成功提示
+        setTimeout(() => {
+          const pages = getCurrentPages();
+          if (pages.length > 1) {
+            wx.navigateBack();
+          } else {
+            wx.switchTab({ url: '/pages/index/index' });
+          }
+        }, 1500);
       } else {
         wx.showToast({
           title: (result && result.result && result.result.message) || '保存失败',
@@ -685,18 +718,26 @@ Page({
       wx.hideLoading();
       this.setData({ saving: false });
       
-      let errorMsg = '保存失败';
+      let errorMsg = '保存失败，请重试';
+      let errorDetail = '';
+      
       if (err.errMsg && err.errMsg.includes('timeout')) {
-        errorMsg = '请求超时！请检查：\n1. 云函数是否已上传\n2. 网络连接是否正常';
+        errorMsg = '请求超时';
+        errorDetail = '可能原因：\n1. 云函数未上传到云端\n2. 网络连接不稳定\n3. 云函数执行时间过长\n\n建议：\n• 检查云函数是否已上传\n• 切换到稳定的网络环境';
       } else if (err.errMsg && err.errMsg.includes('fail')) {
-        errorMsg = '网络请求失败，请检查网络';
+        errorMsg = '网络请求失败';
+        errorDetail = '请检查：\n1. 手机网络连接是否正常\n2. 是否已开通云开发\n3. 云开发环境ID是否配置正确';
       } else if (err.message) {
-        errorMsg = err.message;
+        errorDetail = err.message;
       }
       
+      // 振动反馈
+      wx.vibrateShort({ type: 'heavy' });
+      
       wx.showModal({
-        title: '保存失败',
-        content: errorMsg,
+        title: errorMsg,
+        content: errorDetail || '请检查网络连接后重试',
+        confirmText: '我知道了',
         showCancel: false
       });
     }
@@ -764,6 +805,19 @@ Page({
       this._cursorPositions[field] = e.detail.cursor;
       console.log('[光标] blur 记录', field, 'pos=', e.detail.cursor);
     }
+    // 清除焦点样式
+    this.setData({ focusField: '' });
+  },
+
+  // 输入框获得焦点
+  onInputFocus(e) {
+    const field = e.currentTarget.dataset.field;
+    this.setData({ focusField: field || '' });
+  },
+
+  // 输入框失去焦点
+  onInputBlur() {
+    this.setData({ focusField: '' });
   },
 
   // textarea 聚焦时也记录
@@ -846,6 +900,30 @@ Page({
     wx.showToast({ title: '语音识别成功', icon: 'success' });
   },
   
+  // 键盘弹出时，滚动到当前输入位置
+  scrollToCurrentInput() {
+    const query = wx.createSelectorQuery().in(this);
+    // 查找当前获得焦点的输入框
+    query.select('.input-wrap-focus').boundingClientRect((rect) => {
+      if (rect) {
+        try {
+          // 计算需要滚动的距离（用系统信息替代 window.innerHeight）
+          const systemInfo = wx.getSystemInfoSync();
+          const viewportHeight = systemInfo.windowHeight - this._keyboardHeight;
+          const scrollTop = Math.max(0, rect.top + rect.height - viewportHeight);
+          if (scrollTop > 0) {
+            wx.pageScrollTo({
+              scrollTop: scrollTop,
+              duration: 300
+            });
+          }
+        } catch (e) {
+          console.log('[键盘滚动] 计算失败', e);
+        }
+      }
+    }).exec();
+  },
+  
   // ===== 分享 =====
   // 分享
   onShareAppMessage() {
@@ -854,5 +932,38 @@ Page({
       path: '/pages/create/create',
       imageUrl: '/images/share-cover.png'
     };
+  },
+
+  // 页面离开前提示保存
+  onBeforeUnload() {
+    // 检查表单是否有内容
+    const { log, isEdit } = this.data;
+    const hasContent = log.projectName || 
+                        log.content.constructionContent || 
+                        log.content.personnelCount > 0 || 
+                        log.content.progressPercent > 0;
+    
+    if (hasContent && !isEdit) {
+      // 有内容但未保存，提示用户
+      return new Promise((resolve) => {
+        wx.showModal({
+          title: '提示',
+          content: '当前日志尚未保存，是否保存为草稿？',
+          confirmText: '保存草稿',
+          cancelText: '直接离开',
+          success: (res) => {
+            if (res.confirm) {
+              // 保存为草稿
+              this.saveLog('draft');
+              resolve(false); // 阻止离开，等保存完成后再手动离开
+            } else {
+              resolve(true); // 允许离开
+            }
+          }
+        });
+      });
+    }
+    
+    return true; // 允许离开
   }
 });

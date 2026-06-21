@@ -39,11 +39,14 @@
     <view class="form-item">
       <text class="label required">项目名称</text>
       <input 
-        class="input-wrap"
+        class="input-wrap {{focusField === 'projectName' ? 'input-wrap-focus' : ''}}"
         style="height: 80rpx;"
         placeholder="请输入项目名称"
         value="{{log.projectName}}"
         bindinput="onProjectNameInput"
+        bindfocus="onInputFocus"
+        bindblur="onInputBlur"
+        data-field="projectName"
       />
     </view>
     

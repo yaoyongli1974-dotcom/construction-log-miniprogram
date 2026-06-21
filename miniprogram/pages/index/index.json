@@ -1,4 +1,8 @@
 {
-  "usingComponents": {},
-  "navigationBarTitleText": "施工日志"
+  "usingComponents": {
+    "loading": "/components/loading/loading"
+  },
+  "navigationBarTitleText": "施工日志",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

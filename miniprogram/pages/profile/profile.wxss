@@ -7,9 +7,10 @@
 
 /* 用户信息卡片 */
 .user-card {
-  background: linear-gradient(135deg, #1AAD19 0%, #12B347 100%);
+  background: linear-gradient(135deg, #07C160 0%, #12B347 100%);
   color: #FFFFFF;
   padding: 40rpx 30rpx;
+  border-radius: 16rpx;
 }
 
 .user-info {
@@ -17,24 +18,47 @@
   align-items: center;
 }
 
+/* 头像按钮（包裹 image，使用新API） */
+.avatar-btn {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  line-height: 1;
+  min-height: auto;
+  width: 120rpx;
+  height: 120rpx;
+  margin-right: 30rpx;
+  flex-shrink: 0;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
 .user-avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
   border: 4rpx solid rgba(255, 255, 255, 0.5);
-  margin-right: 30rpx;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
-.user-name {
+/* 昵称输入框（使用新API input type="nickname"） */
+.nickname-input {
   font-size: 36rpx;
   font-weight: bold;
   color: #FFFFFF;
   margin-bottom: 8rpx;
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 100%;
 }
 
 .user-id {

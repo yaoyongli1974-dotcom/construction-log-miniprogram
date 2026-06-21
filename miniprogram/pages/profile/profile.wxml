@@ -1,16 +1,30 @@
-<!--pages/profile/profile.wxml - 个人中心模板 -->
+<!--pages/profile/profile.wxml - 个人中心模板（静默登录版）-->
 <view class="container">
   <!-- 用户信息卡片 -->
   <view class="card user-card">
     <view class="user-info flex-row">
-      <image 
-        class="user-avatar" 
-        src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" 
-        mode="aspectFill"
-      ></image>
+      <!-- 头像：使用新API button open-type="chooseAvatar" -->
+      <button 
+        class="avatar-btn" 
+        open-type="chooseAvatar" 
+        bindchooseavatar="onChooseAvatar"
+      >
+        <image 
+          class="user-avatar" 
+          src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" 
+          mode="aspectFill"
+        ></image>
+      </button>
       <view class="user-details">
-        <text class="user-name">{{userInfo.nickName || '未设置昵称'}}</text>
-        <text class="user-id">ID: {{userInfo.openid || ''}}</text>
+        <!-- 昵称：使用新API input type="nickname" -->
+        <input 
+          class="nickname-input" 
+          type="nickname" 
+          value="{{userInfo.nickName || '微信用户'}}"
+          placeholder="点击设置昵称"
+          bindchange="onInputNickname"
+        />
+        <text class="user-id">ID: {{openid || '加载中...'}}</text>
       </view>
     </view>
   </view>
