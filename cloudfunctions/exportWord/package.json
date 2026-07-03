@@ -1,10 +1,9 @@
 {
   "name": "exportWord",
   "version": "1.0.0",
-  "description": "导出施工日志为 Word 文档（.docx 格式）",
+  "description": "导出施工日志为 Word 文档（HTML 格式，.doc 后缀）",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3",
-    "docx": "^8.5.0"
+    "wx-server-sdk": "~2.6.3"
   }
 }

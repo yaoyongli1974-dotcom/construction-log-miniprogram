@@ -1,5 +1,5 @@
 <!--pages/index/index.wxml - 首页模板 -->
-<view class="container">
+<view class="container {{multiSelect ? 'has-multi-bar' : ''}}">
   <!-- 搜索栏 -->
   <view class="search-bar">
     <view class="search-toggle" bindtap="toggleSearch">
@@ -29,41 +29,53 @@
     </view>
   </view>
   
+  
+  <!-- 切换多选按钮 -->
+  <view class="select-toggle" bindtap="toggleMultiSelect">
+    <text>{{multiSelect ? '取消' : '选择'}}</text>
+  </view>
+
   <!-- 日志列表 -->
   <view class="log-list">
     <block wx:if="{{logs.length > 0}}">
       <view 
-        class="log-card card" 
+        class="log-card card {{multiSelect ? 'multi-mode' : ''}}" 
         wx:for="{{logs}}" 
         wx:key="_id"
-        bindtap="viewLogDetail"
-        data-id="{{item._id}}"
+        bindtap="{{multiSelect ? 'toggleSelect' : 'viewLogDetail'}}"
+        data-id="{{item.__id}}"
       >
-        <view class="log-header flex-between">
-          <text class="log-date">{{item.date}}</text>
-          <text class="log-weather">{{item.weather}}</text>
-        </view>
-        
-        <view class="log-project">{{item.projectName}}</view>
-        
-        <view class="log-summary">
-          <view class="summary-item">
-            <text class="summary-label">进度：</text>
-            <text class="summary-value">{{item.content.progressPercent}}%</text>
-          </view>
-          <view class="summary-item">
-            <text class="summary-label">人数：</text>
-            <text class="summary-value">{{item.content.personnelCount}}人</text>
+        <!-- 复选框 -->
+        <view class="checkbox-wrap" wx:if="{{multiSelect}}">
+          <view class="checkbox {{item.__selected ? 'checked' : ''}}">
+            <text class="check-icon" wx:if="{{item.__selected}}">✓</text>
           </view>
         </view>
-        
-        <view class="log-footer flex-between">
-          <text class="log-status badge {{item.status === 'published' ? 'badge-success' : 'badge-warning'}}">
-            {{item.status === 'published' ? '已发布' : '草稿'}}
-          </text>
-          <text class="log-images" wx:if="{{item.images && item.images.length > 0}}">
-            📷 {{item.images.length}}张图片
-          </text>
+        <!-- 卡片内容 -->
+        <view class="log-content">
+          <view class="log-header flex-between">
+            <text class="log-date">{{item.date}}</text>
+            <text class="log-weather">{{item.weather}}</text>
+          </view>
+          <view class="log-project">{{item.projectName}}</view>
+          <view class="log-summary">
+            <view class="summary-item">
+              <text class="summary-label">进度：</text>
+              <text class="summary-value">{{item.content.progressPercent}}%</text>
+            </view>
+            <view class="summary-item">
+              <text class="summary-label">人数：</text>
+              <text class="summary-value">{{item.content.personnelCount}}人</text>
+            </view>
+          </view>
+          <view class="log-footer flex-between">
+            <text class="log-status badge {{item.status === 'published' ? 'badge-success' : 'badge-warning'}}">
+              {{item.status === 'published' ? '已发布' : '草稿'}}
+            </text>
+            <text class="log-images" wx:if="{{item.images && item.images.length > 0}}">
+              📷 {{item.images.length}}张图片
+            </text>
+          </view>
         </view>
       </view>
     </block>
@@ -96,6 +108,37 @@
   <!-- 导出按钮 -->
   <view class="export-button" bindtap="showExportPanel">
     <text class="export-icon">📤</text>
+  </view>
+
+  <!-- 多选操作栏 - 底部固定 -->
+  <view class="multi-bar" wx:if="{{multiSelect}}">
+    <view class="multi-left">
+      <view class="checkbox {{isAllSelected ? 'checked' : ''}}" bindtap="toggleSelectAll">
+        <text class="check-icon" wx:if="{{isAllSelected}}">✓</text>
+      </view>
+      <text class="multi-text">已选 {{selectedLogs.length}} 条</text>
+    </view>
+    <view class="multi-actions">
+      <view class="btn-mini btn-export" bindtap="showBatchFormatPicker">导出</view>
+      <view class="btn-mini btn-delete" bindtap="batchDelete">删除</view>
+    </view>
+  </view>
+
+  <!-- 批量导出格式选择弹窗 -->
+  <view class="batch-format-mask" wx:if="{{showBatchFormat}}" bindtap="hideBatchFormatPicker"></view>
+  <view class="batch-format-popup" wx:if="{{showBatchFormat}}">
+    <view class="batch-format-title">选择导出格式</view>
+    <view class="batch-format-list">
+      <view class="batch-format-item" data-format="excel" bindtap="doBatchExport">
+        <text class="batch-format-icon">📊</text>
+        <text class="batch-format-name">Excel 表格</text>
+      </view>
+      <view class="batch-format-item" data-format="word" bindtap="doBatchExport">
+        <text class="batch-format-icon">📄</text>
+        <text class="batch-format-name">Word 文档</text>
+      </view>
+    </view>
+    <view class="batch-format-cancel" bindtap="hideBatchFormatPicker">取消</view>
   </view>
 </view>
 

@@ -8,16 +8,22 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
  * 表格结构：6列，精确匹配标准施工日志表 A5 格式
  */
 exports.main = async (event, context) => {
-  const { startDate, endDate } = event;
+  const { startDate, endDate, logIds } = event;
   const db = cloud.database();
   const _ = db.command;
 
   // 1. 查询日志数据
   let query = db.collection('logs');
-  const where = {};
-  if (startDate) where.date = _.gte(startDate);
-  if (endDate) where.date = where.date ? where.date.and(_.lte(endDate)) : _.lte(endDate);
-  if (Object.keys(where).length > 0) query = query.where(where);
+  if (logIds && logIds.length > 0) {
+    // 按 ID 列表查询
+    query = query.where({ _id: _.in(logIds) });
+  } else {
+    // 按日期范围查询
+    const where = {};
+    if (startDate) where.date = _.gte(startDate);
+    if (endDate) where.date = where.date ? where.date.and(_.lte(endDate)) : _.lte(endDate);
+    if (Object.keys(where).length > 0) query = query.where(where);
+  }
 
   const res = await query.orderBy('date', 'asc').limit(100).get();
   const logs = res.data || [];
@@ -173,8 +179,12 @@ exports.main = async (event, context) => {
   // 4. 写入缓冲区并上传云存储
   const buffer = await workbook.xlsx.writeBuffer();
 
+  const fileName = logIds && logIds.length > 0
+    ? `施工日志_选中${logs.length}条.xlsx`
+    : `施工日志_${startDate}_${endDate}.xlsx`;
+
   const uploadRes = await cloud.uploadFile({
-    cloudPath: `exports/excel/施工日志_${startDate}_${endDate}.xlsx`,
+    cloudPath: `exports/excel/${fileName}`,
     fileContent: Buffer.from(buffer)
   });
 

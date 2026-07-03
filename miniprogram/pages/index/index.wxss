@@ -301,13 +301,130 @@
   font-size: 28rpx;
 }
 
-/* 没有更多数据 */
-.no-more {
+/* 切换选择按钮 */
+.select-toggle {
+  text-align: center;
+  padding: 16rpx;
+  margin-bottom: 16rpx;
+  background: var(--card-bg);
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: var(--primary-color);
+}
+
+/* 多选模式下的底部留白 */
+.container.has-multi-bar {
+  padding-bottom: 300rpx;
+}
+
+/* 多选操作栏 - 底部固定（tabBar上方） */
+.multi-bar {
+  position: fixed;
+  bottom: calc(120rpx + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.12);
+}
+
+.multi-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.multi-text {
+  font-size: 22rpx;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200rpx;
+  flex-shrink: 1;
+}
+
+.multi-actions {
+  display: flex;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+/* 微型按钮（view 模拟） */
+.btn-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 8rpx;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.btn-export {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+
+.btn-delete {
+  background: #FF4D4F;
+  color: #FFFFFF;
+}
+
+/* 复选框 */
+.checkbox-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40rpx 20rpx;
-  gap: 20rpx;
+  width: 60rpx;
+  flex-shrink: 0;
+}
+
+.checkbox {
+  width: 44rpx;
+  height: 44rpx;
+  border: 3rpx solid var(--border-color);
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.checkbox.checked {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.check-icon {
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+/* 多选模式下的卡片 */
+.log-card.multi-mode {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+}
+
+.log-card.multi-mode .log-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.log-card.multi-mode .checkbox-wrap {
+  margin-right: 16rpx;
+  padding-top: 8rpx;
 }
 
 .no-more-line {
@@ -320,4 +437,76 @@
 .no-more-text {
   font-size: 24rpx;
   color: var(--text-hint);
+}
+
+/* 批量导出格式选择弹窗 */
+.batch-format-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+.batch-format-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  z-index: 1001;
+  width: 560rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0,0,0,0.2);
+}
+
+.batch-format-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 32rpx;
+  color: var(--text-primary);
+}
+
+.batch-format-list {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.batch-format-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 16rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid var(--border-color);
+  transition: all 0.2s ease;
+}
+.batch-format-item:active {
+  background: var(--primary-color-light, #e8f5e9);
+  border-color: var(--primary-color);
+}
+
+.batch-format-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.batch-format-name {
+  font-size: 26rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.batch-format-cancel {
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--text-hint);
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--border-color);
 }
