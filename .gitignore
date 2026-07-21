@@ -18,3 +18,14 @@ Thumbs.db
 # 临时文件
 *.tmp
 *.swp
+
+# 根 node_modules（npm install 生成，体积大）
+node_modules/
+
+# 本地生成 / 测试产物
+generated-images/
+i18n/
+inspect/
+
+# IDE 自动生成的账户绑定文件（含 userName，非通用）
+miniprogram/app.miniapp.json

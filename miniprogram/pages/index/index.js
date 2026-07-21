@@ -206,14 +206,15 @@ Page({
 
     try {
       const cloudFuncName = format === 'word' ? 'exportWord' : 'exportExcel';
-      const fileType = format === 'word' ? 'doc' : 'xlsx';
-      const fileExt = format === 'word' ? 'doc' : 'xlsx';
+      const fileType = format === 'word' ? 'docx' : 'xlsx';
+      const fileExt = format === 'word' ? 'docx' : 'xlsx';
 
       const res = await wx.cloud.callFunction({
         name: cloudFuncName,
         data: {
           logIds: selectedLogs
-        }
+        },
+        timeout: 60000
       });
 
       if (res.result && res.result.success) {
@@ -229,7 +230,9 @@ Page({
           fileType: fileType,
           showMenu: true,
           success: () => {
-            wx.showToast({ title: `导出成功（${selectedLogs.length}条）`, icon: 'success' });
+            const pc = res.result.photoCount || 0;
+            const lw = res.result.logsWithImages || 0;
+            wx.showToast({ title: `导出${selectedLogs.length}条·${lw}条有图·下载${pc}张`, icon: 'none', duration: 2500 });
           }
         });
       } else {
@@ -428,7 +431,7 @@ Page({
     wx.showLoading({ title: '正在生成文件...', mask: true });
     
     try {
-      const cloudPath = `${exportFormat}/${exportStartDate}_${exportEndDate}.${exportFormat === 'excel' ? 'xlsx' : 'doc'}`;
+      const cloudPath = `${exportFormat}/${exportStartDate}_${exportEndDate}.${exportFormat === 'excel' ? 'xlsx' : 'docx'}`;
       
       // 调用云函数生成文件
       const res = await wx.cloud.callFunction({
@@ -436,7 +439,8 @@ Page({
         data: {
           startDate: exportStartDate,
           endDate: exportEndDate
-        }
+        },
+        timeout: 60000
       });
       
       if (res.result && res.result.success) {
@@ -465,10 +469,12 @@ Page({
         // 统一用 wx.openDocument() 打开（Excel 和 Word 都支持）
         wx.openDocument({
           filePath: tempFilePath,
-          fileType: exportFormat === 'excel' ? 'xlsx' : 'doc',
+          fileType: exportFormat === 'excel' ? 'xlsx' : 'docx',
           showMenu: true,
           success: () => {
-            wx.showToast({ title: '导出成功（共' + count + '条）', icon: 'success' });
+            const pc = res.result.photoCount || 0;
+            const lw = res.result.logsWithImages || 0;
+            wx.showToast({ title: `导出${count}条·${lw}条有图·下载${pc}张`, icon: 'none', duration: 2500 });
           },
           fail: (openErr) => {
             console.error('[导出] 打开文档失败', openErr);

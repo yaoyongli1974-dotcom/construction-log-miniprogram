@@ -8,29 +8,30 @@ exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
   const db = cloud.database();
   const _ = db.command;
-  
+
+  if (!OPENID) {
+    return { success: false, message: '用户未登录' };
+  }
+
   try {
-    const { 
-      userId, 
-      page = 1, 
-      pageSize = 20, 
-      startDate, 
+    const {
+      page = 1,
+      pageSize = 20,
+      startDate,
       endDate,
       projectName,
-      status 
+      status
     } = event;
-    
-    // 构建查询条件
-    let query = {};
-    
-    // 如果指定了userId，则查询该用户的日志（用于分享查看）
-    if (userId) {
-      query.userId = userId;
-    } else {
-      // 否则查询当前用户的日志
-      query.userId = OPENID;
-    }
-    
+
+    // 必须查询当前用户的日志（服务端取 OPENID，不信任前端 userId）
+    // 兼容历史数据：旧记录用 userId 字段，新记录用 _openid 字段
+    let query = {
+      $or: [
+        { _openid: OPENID },
+        { userId: OPENID }
+      ]
+    };
+
     // 日期范围查询
     if (startDate && endDate) {
       query.date = _.gte(startDate).and(_.lte(endDate));
@@ -39,7 +40,7 @@ exports.main = async (event, context) => {
     } else if (endDate) {
       query.date = _.lte(endDate);
     }
-    
+
     // 项目名称筛选
     if (projectName) {
       query.projectName = db.RegExp({
@@ -47,16 +48,16 @@ exports.main = async (event, context) => {
         options: 'i'
       });
     }
-    
+
     // 状态筛选
     if (status) {
       query.status = status;
     }
-    
+
     // 查询总数
     const countResult = await db.collection('logs').where(query).count();
     const total = countResult.total;
-    
+
     // 分页查询
     const skip = (page - 1) * pageSize;
     const result = await db.collection('logs')
@@ -65,7 +66,7 @@ exports.main = async (event, context) => {
       .skip(skip)
       .limit(pageSize)
       .get();
-    
+
     return {
       success: true,
       data: result.data,

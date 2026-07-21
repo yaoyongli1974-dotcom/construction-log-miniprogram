@@ -1,21 +1,34 @@
-// 云函数 deleteLog - 删除施工日志
+// 云函数 deleteLog - 删除施工日志（带用户权限校验）
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 exports.main = async (event, context) => {
   const { logId } = event;
-  
+  const { OPENID } = cloud.getWXContext();
+
   if (!logId) {
     return { success: false, message: '缺少日志ID' };
   }
-  
+  if (!OPENID) {
+    return { success: false, message: '用户未登录' };
+  }
+
   try {
     const db = cloud.database();
-    const _ = db.command;
-    
-    // 删除日志（云函数有管理员权限，不受权限限制）
-    const result = await db.collection('logs').doc(logId).remove();
-    
+
+    // 只能删除属于当前用户的日志
+    const result = await db.collection('logs').where({
+      _id: logId,
+      $or: [
+        { _openid: OPENID },
+        { userId: OPENID }
+      ]
+    }).remove();
+
+    if (result.stats.removed === 0) {
+      return { success: false, message: '日志不存在或无权删除' };
+    }
+
     return {
       success: true,
       message: '删除成功',

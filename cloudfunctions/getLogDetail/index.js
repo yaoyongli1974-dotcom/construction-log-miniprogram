@@ -5,21 +5,29 @@ cloud.init({
 });
 
 exports.main = async (event, context) => {
-  const { logId, userId } = event;
+  const { logId } = event;
+  const { OPENID } = cloud.getWXContext();
   const db = cloud.database();
-  
+  const _ = db.command;
+
+  if (!logId) {
+    return { success: false, message: '缺少日志ID' };
+  }
+  if (!OPENID) {
+    return { success: false, message: '用户未登录' };
+  }
+
   try {
-    // 构建查询条件
-    let query = { _id: logId };
-    
-    // 如果指定了userId，则验证日志属于该用户（用于分享查看）
-    if (userId) {
-      query.userId = userId;
-    }
-    
-    // 查询日志
-    const result = await db.collection('logs').where(query).get();
-    
+    // 必须同时校验 _id 和当前用户 openid
+    // 兼容历史数据（只有 userId 字段）和新数据（有 _openid 字段）
+    const result = await db.collection('logs').where({
+      _id: logId,
+      $or: [
+        { _openid: OPENID },
+        { userId: OPENID }
+      ]
+    }).get();
+
     if (result.data.length > 0) {
       return {
         success: true,

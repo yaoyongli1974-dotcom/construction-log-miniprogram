@@ -20,9 +20,11 @@ exports.main = async (event, context) => {
     }
     
     // 添加日志
+    // 同时写入 _openid（云数据库保留字段）和 userId（历史兼容字段）
     const result = await db.collection('logs').add({
       data: {
         ...logData,
+        _openid: OPENID,
         userId: OPENID,
         createTime: db.serverDate(),
         updateTime: db.serverDate(),
